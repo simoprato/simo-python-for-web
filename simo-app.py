@@ -1,11 +1,14 @@
 #NOTE: to run this script, just enter the directory where this python file is and type python simo-app.py
-from flask import Flask,redirect,url_for,render_template, request, session
+from flask import Flask,redirect,url_for,render_template, request, session, flash
 #note: pip install flask is required in the local environment
 #redirect, allows redirection from certain urls
 #url_for, allows to choose where to redirect
 #render_template allows to render html templates in the folder template
 #request allows to use and manipulate results from http requests (GET, POST)
 #session allows to manage sessions, during which data sent to the server are stored locally - NB: every time we close the web page, all the data of the session are erased
+#flash allows the usage of flash messaging
+from datetime import timedelta
+#allows setting the time for permanent session duration
 from libraries.contentful import Contentful
 #note: pip install contentful is required in the local environment
 #Contentful allows easy article management without a database 
@@ -23,6 +26,8 @@ load_dotenv()
 app = Flask(__name__)
 #setting up a secret key to encript all the data shared with the server through POST calls
 app.secret_key= "hello"
+#setting validity time of permanent sessions (how long data are stored in server, even though we close web page)
+app.permanent_session_lifetime= timedelta(minutes=5)
 
 #defining keys and values of NavBar (they will be name and href)
 navbar = {
@@ -57,12 +62,16 @@ def home():
 def login(): 
 #if user arrives through post call, so presses submit button, is redirected to user page with the name typed in submit form 
   if request.method == "POST":
+    session.permanent=True #after login, the session becomes permanent for as long as we want it to
     user=request.form["nm"] #note: request.form is a dictionary, so we can access via keys
     session["user"]=user #creating a session name after the user that has filled in the login form
+    flash(f"You have successfully logged in, {user}", "info") 
     return redirect(url_for("user")) #after login, user is redirected to user page
 #if user arrives through get call, so from other page, sees login form
   else:
     if "user" in session:
+          user=session["user"]
+          flash(f"You are already logged in, {user}", "info")
           return redirect(url_for("user")) 
     
     return render_template("login_page.html",
@@ -70,7 +79,15 @@ def login():
 
 @app.route("/logout")
 def logout():
-   session.pop("user", None) #erases user session
+   #checks if a specific user has already logged in, only in that case the logout message appears
+   if "user" in session: 
+      user=session["user"]
+      #includes flash message content and cathegory
+      flash(f"You have successfully logged out, {user}", "info") 
+   else:
+      flash(f"You need to login first", "info")  
+   #erases user session 
+   session.pop("user", None)    
    return redirect(url_for("login"))
 
 @app.route("/user")
@@ -81,15 +98,9 @@ def user():
        user=user,
        navbar=navbar)
     else: 
+        flash(f"You need to login first", "info")
         return redirect(url_for("login")) #if not already logged, user must log
-
-
-#TEST PAGE
-@app.route("/test")
-def test(): 
-    return render_template("new.html")
-
-
+        
 #ANOTHER PAGE (WELCOME)
 #page getting the url last argument as input
 #version 1: simple in line html

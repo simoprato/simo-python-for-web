@@ -1,5 +1,13 @@
 {% extends "base.html" %}
 {% block content %} 
+<!-- Includes a check on flash messages and displays them if any -->
+{% with messages = get_flashed_messages() %}
+  {% if messages %} 
+    {% for msg in messages %} 
+      <p>{{msg}}</p>
+    {% endfor %}
+  {% endif %} 
+  {% endwith %}
 <!-- Creates a form retrieving user name with submit button, redirecting to home (#) and making a post http call-->
 <form action="#" method="post">
     <p>Name:</p>
@@ -8,9 +16,4 @@
 <!-- Creates submit button and call it "submit"-->
     <p><input type="submit" value="submit"></p>    
 </form>
-
-
-
-
-
 {% endblock %}
