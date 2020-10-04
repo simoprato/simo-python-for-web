@@ -6,7 +6,7 @@
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
 
 <!-- the following sintax allows template customization after template inheritance by defining title in the child html file-->
-      <title>{% block title %}{%endblock%}</title>
+      {% block head %}{%endblock%}
       </head>
 
     <body>
@@ -28,7 +28,7 @@
           </nav>
         
   
-        <p>{% block content %}{%endblock%}</p>
+        {% block content %}{%endblock%}
         <!--including footer template -->
         {% include "footer.html" %}
 

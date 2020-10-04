@@ -4,10 +4,16 @@
 
 
 <!-- defining customized content for blocks named "title" and "content":-->
-{% block title %}
-Home page
+{% block head %}
+<title>Home Page</title> 
 {% endblock %}
 
 {% block content %}
 <h1>Simone Prato's website</h1>
+<p> Here you find a selection of my articles: </p>
+{% for article in articles %}
+<p>{{article.title}}</p>
+<p>{{article.description}}</p>
+
+{% endfor %}
 {% endblock %}

@@ -1,11 +1,17 @@
+#NOTE: to run this script, just enter the directory where this python file is and type python simo-app.py
 from flask import Flask,redirect,url_for,render_template, request, session
-#redirect, #allows redirection from certain urls
-#url_for, #allows to choose where to redirect
-#render_template #allows to render html templates in the folder template
-#request allows to use and manipulate results from http requests
+#note: pip install flask is required in the local environment
+#redirect, allows redirection from certain urls
+#url_for, allows to choose where to redirect
+#render_template allows to render html templates in the folder template
+#request allows to use and manipulate results from http requests (GET, POST)
 #session allows to manage sessions, during which data sent to the server are stored locally - NB: every time we close the web page, all the data of the session are erased
+from libraries.contentful import Contentful
+#note: pip install contentful is required in the local environment
+#Contentful allows easy article management without a database 
 
-#to run this, just enter the directory where this python file is and type python simo-app.py
+
+
 
 #launching the Flask app
 app = Flask(__name__)
@@ -29,9 +35,15 @@ def home():
 # version1 with in-line html
 # return "Hello, this is the main page of the Website <h1> Main Page <h1>"
 
-#version 2: rendering of html file 
+#getting all articles from Contentful space
+ articles = Contentful.get_all_articles()
+
+
+#version 2: rendering of home_page html file with information passed about navbar and contentful articles
  return render_template("index_inher.html",
-  navbar=navbar)
+  navbar=navbar,
+  articles=articles
+  )
 
 #LOGIN PAGE 
 #Testing GET(non secure, visible to all) and POST (more secure) methods for http calls

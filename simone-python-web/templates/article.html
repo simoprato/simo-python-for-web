@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block head %}
+
+{%title=article.title%}
+<title>{{title}}</title>
+
+{%description=article.description%}
+<meta type="description" content="{{description}}" />
+
+{% endblock %}
+
+
+{% block content %}
+	<div class="container">
+		<h1>{{article.title}}</h1>
+		<div>{{article.html}}</div>
+	</div>
+{% endblock %}
