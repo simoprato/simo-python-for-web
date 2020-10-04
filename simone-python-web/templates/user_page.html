@@ -1,0 +1,15 @@
+<html>
+{% extends "base.html"%}
+
+<head>
+   {%block title %}
+    <title>This page greets the user if the /user url is written </title>
+    {% endblock  %}
+ </head>
+
+<body>
+   {%block content %}
+   <p>Hello dear {{user}}! Welcome to this page!</p>
+   {% endblock  %}
+ </body>
+</html>

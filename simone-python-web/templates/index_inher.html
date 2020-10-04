@@ -1,0 +1,13 @@
+<!--Index file, the Home Page, with template inheritance from base.html, see index.html for original structure:-->
+{% extends "base.html" %} 
+
+
+
+<!-- defining customized content for blocks named "title" and "content":-->
+{% block title %}
+Home page
+{% endblock %}
+
+{% block content %}
+<h1>Simone Prato's website</h1>
+{% endblock %}
