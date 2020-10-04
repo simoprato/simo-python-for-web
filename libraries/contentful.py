@@ -1,11 +1,20 @@
 #creating a python file defining contentful class and its classmethods to be imported into our main website app
 
 import contentful
+import logging
+import os #allows drawing info from operative system
+from dotenv import load_dotenv
+#requires pip install python-dotenv
+#loading information in .env file (e.g. secret keys)
+load_dotenv()
+ 
+
 
 class Contentful:
     client = contentful.Client(
-        'y4ovs9dhmwak', 
-        'N41kx8Bf6J2toQjTwtl4FzFZ9xhVtLYL3KKeRsucBBI'
+        #the space id and the delivery token of the API key are drawn from the .env file
+        os.getenv('CONTENTFUL_SPACE_ID'), 
+        os.getenv('CONTENTFUL_DELIVERY_TOKEN')
         )
 
 

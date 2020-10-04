@@ -9,6 +9,12 @@ from flask import Flask,redirect,url_for,render_template, request, session
 from libraries.contentful import Contentful
 #note: pip install contentful is required in the local environment
 #Contentful allows easy article management without a database 
+import os
+#os allows to manipulate information within the local os
+from dotenv import load_dotenv
+#requires pip install python-dotenv
+#loading information in .env file (e.g. secret keys)
+load_dotenv()
 
 
 
