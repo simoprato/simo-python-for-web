@@ -9,6 +9,8 @@
 
 <body>
    {%block content %}
+
+   <!-- Allows showing flashed messages--> 
    {% with messages = get_flashed_messages() %}
   {% if messages %} 
     {% for msg in messages %} 
@@ -16,7 +18,16 @@
     {% endfor %}
   {% endif %} 
   {% endwith %}
+
+  <!--  Welcome paragraph --> 
    <p>Hello dear {{user}}! Welcome to this page!</p>
+
+  <!--  Email insertion form --> 
+   <form action="#" method="POST">
+     <input type="email" name="email" placeholder="Enter email" value="{{email if email}}"/>
+     <input type="submit" name="submit"/>
+   </form>
+
    {% endblock  %}
  </body>
 </html>

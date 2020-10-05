@@ -12,12 +12,18 @@ from datetime import timedelta
 from libraries.contentful import Contentful
 #note: pip install contentful is required in the local environment
 #Contentful allows easy article management without a database 
+from rich_text_renderer import RichTextRenderer
+#requires pip install rich_text_renderer
+#allows better rendering of articles
 import os
 #os allows to manipulate information within the local os
 from dotenv import load_dotenv
 #requires pip install python-dotenv
-#loading information in .env file (e.g. secret keys)
 load_dotenv()
+#loading information in .env file (e.g. secret keys)
+from flask_sqlalchemy import SQLAlchemy
+#requires pip install flask-sqlalchemy
+#allows use of databases
 
 
 
@@ -86,21 +92,33 @@ def logout():
       flash(f"You have successfully logged out, {user}", "info") 
    else:
       flash(f"You need to login first", "info")  
-   #erases user session 
+   #erases user session data during logout
    session.pop("user", None)    
+   session.pop("email", None) 
    return redirect(url_for("login"))
 
-@app.route("/user")
+@app.route("/user", methods= ["POST", "GET"])
 def user():
+    email = None
     if "user" in session: #checks if a specific user has already logged in
       user=session["user"]
+      #if the request method is POST (form submission), get the email from the form
+      if request.method == "POST":
+       email=request.form["email"]
+       session["email"]=email
+      #if the request method is GET (so it is a refresh, or generally not a form submission), get the email address from the session
+      else:
+        if "email" in session:
+          email=session["email"]
+
       return render_template("user_page.html",
        user=user,
-       navbar=navbar)
+       navbar=navbar,
+       email=email)
     else: 
         flash(f"You need to login first", "info")
         return redirect(url_for("login")) #if not already logged, user must log
-        
+
 #ANOTHER PAGE (WELCOME)
 #page getting the url last argument as input
 #version 1: simple in line html
@@ -111,7 +129,17 @@ def user():
 #@app.route("/<name>")
 #def user(name):
 # return f"Welcome to this page {name}"
- 
+
+#BLOG
+@app.route('/blog/<slug>')
+def article(slug):
+    article = Contentful.get_article_by_slug(slug)
+    renderer = RichTextRenderer()
+    article.html = renderer.render(article.content)
+    return render_template('article.html',
+        navbar=navbar,
+        article=article
+    )
     
 
 

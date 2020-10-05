@@ -26,11 +26,13 @@
               </div>
             </div>
           </nav>
-        
-  
+
+  <!--content block is inserted into a fluid container div-->  
+  <div class="container-fluid">
         {% block content %}{%endblock%}
         <!--including footer template -->
         {% include "footer.html" %}
+  </div>
 
 <!-- including Bootstrap's Javascript link at the end of the body-->
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
