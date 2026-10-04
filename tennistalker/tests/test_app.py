@@ -135,6 +135,12 @@ def login(client, pid, premium=False):
             s["premium"] = True
 
 
+def test_home_always_links_my_data(client, world):
+    login(client, active_player(world).id)  # anche con un giocatore simulato scelto
+    html = client.get("/").get_data(as_text=True)
+    assert 'href="/i-miei-dati"' in html and "Importa i miei dati" in html and "v1.1" in html
+
+
 def test_free_pages(client, world):
     login(client, active_player(world).id)
     for url in FREE:
@@ -314,7 +320,8 @@ def test_import_flow_reconstructs_exact_totals(tmp_path):
     for url in ["/", "/i-miei-dati", "/classifica", "/classifica/armonizzata", "/classifica/supersimulata",
                 "/radar", "/analisi", "/posizione", "/simula", f"/giocatore/{PERSONAL_ID}", "/competizioni?when=past"]:
         assert c.get(url).status_code == 200, url
-    assert "Mario Bianchi" in c.get("/").get_data(as_text=True)
+    home = c.get("/").get_data(as_text=True)
+    assert "Mario Bianchi" in home and "Stai usando i tuoi dati reali" in home
     # eliminazione
     c.post("/i-miei-dati", data={"action": "delete"})
     assert not (tmp_path / "p.json").exists()

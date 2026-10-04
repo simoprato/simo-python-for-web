@@ -27,6 +27,17 @@
   </div>
   {% endif %}
 
+  <a class="card tile row between" href="{{ url_for('my_data') }}" style="border:2px solid var(--lime); display:flex">
+    <div class="row">
+      <span class="logo" style="width:48px;height:48px;font-size:22px">👤</span>
+      <div>
+        <h3 style="margin:0">I miei dati</h3>
+        <div class="muted small">{% if me and me.real %}Stai usando i tuoi dati reali: aggiornali o eliminali.{% else %}Incolla il testo del tuo profilo (es. Tennistalker) e usa tutte le funzioni sulle tue partite.{% endif %}</div>
+      </div>
+    </div>
+    <span class="btn lime small">{{ 'Gestisci' if me and me.real else 'Importa i miei dati' }}</span>
+  </a>
+
   <div class="row between"><h2>Funzionalità</h2>
     {% if not premium %}<a class="btn lime" href="{{ url_for('membership') }}">Sblocca la membership</a>{% endif %}</div>
   <div class="grid g3">

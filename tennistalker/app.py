@@ -21,6 +21,7 @@ from engine.personal import (PERSONAL_ID, ProfileParseError, add_personal_player
 from engine.ranking import RankingService
 from engine.simulation import format_score
 
+VERSION = "1.1"
 PRICE = "79,99€"
 MONTHS = ["gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic"]
 
@@ -112,7 +113,7 @@ def create_app(today=None, seed=2026, profile_path=None):
     def inject():
         return {"premium": is_premium(), "me": me(), "features": FEATURES, "price": PRICE,
                 "today": world.today, "cat": cat, "rank": ranking.realtime,
-                "personal_error": personal_error}
+                "personal_error": personal_error, "version": VERSION}
 
     @app.template_filter("d")
     def fmt_date(d):
