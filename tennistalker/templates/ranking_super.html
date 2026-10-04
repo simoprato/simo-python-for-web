@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% from "_macros.html" import ranking_header, wins_table %}
+{% block title %}Classifica Supersimulata · {{ p.name }}{% endblock %}
+{% block content %}
+<h1>{{ p.name }}</h1>
+<p class="muted">{{ p.club }} · {{ p.region }}</p>
+{% include "ranking_tabs.html" %}
+<div class="stack">
+  {{ ranking_header(data.now, "Se il passaggio di classifica fosse oggi", "Supersimulata · ultimi 12 mesi · avversari armonizzati") }}
+  <div class="grid g3">
+    <div class="card"><div class="muted small">Ultimo passaggio</div><div class="kpi">{{ data.last|d }}</div><div class="muted small">categoria simulata allora: <b>{{ data.at_last.new_label }}</b></div></div>
+    <div class="card"><div class="muted small">Oggi</div><div class="kpi">{{ data.now.new_label }}</div><div class="muted small">coefficiente {{ data.now.coefficient }}</div></div>
+    <div class="card"><div class="muted small">Prossimo passaggio</div><div class="kpi">{{ data.next|d }}</div><div class="muted small">tra {{ (data.next - today).days }} giorni</div></div>
+  </div>
+  <div class="card">
+    <h3>Andamento mese per mese</h3>
+    <p class="muted small">Categoria simulata al primo di ogni mese su finestra mobile di 12 mesi.</p>
+    <div class="table-wrap">
+    <svg viewBox="0 0 {{ chart.width }} {{ chart.height }}" width="100%" style="min-width:520px" role="img" aria-label="Andamento della categoria simulata">
+      {% for yv, lab in chart.yticks %}
+        <line x1="{{ chart.pad_l }}" x2="{{ chart.right }}" y1="{{ yv }}" y2="{{ yv }}" stroke="#e4e4de"/>
+        <text x="{{ chart.pad_l - 8 }}" y="{{ yv + 4 }}" text-anchor="end" font-size="11" fill="#6b6b66">{{ lab }}</text>
+      {% endfor %}
+      <path d="{{ chart.path }}" fill="none" stroke="#1c1c1c" stroke-width="2.5"/>
+      {% for x, y, d, lab, coef, short in chart.points %}
+        <circle cx="{{ x }}" cy="{{ y }}" r="5" fill="#d7ff4f" stroke="#1c1c1c" stroke-width="2"><title>{{ d|d }}: {{ lab }} (coeff. {{ coef }})</title></circle>
+        {% if loop.index0 % 2 == 0 or loop.last %}<text x="{{ x }}" y="{{ chart.bottom + 18 }}" text-anchor="middle" font-size="10" fill="#6b6b66">{{ 'oggi' if loop.last else short }}</text>{% endif %}
+      {% endfor %}
+    </svg>
+    </div>
+  </div>
+  <div class="card"><h3>Vittorie che contano (12 mesi)</h3>{{ wins_table(data.now, players) }}</div>
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Il mio profilo · TennisSim{% endblock %}
+{% block content %}
+<div class="stack" style="max-width:760px">
+  <h1>Il tuo profilo giocatore</h1>
+  <p class="muted">Cerca il giocatore da usare come "te stesso": classifica, radar, simulazioni e analisi verranno calcolati su di lui.</p>
+  {% if me %}<div class="card row between"><div>Profilo attuale: <b>{{ me.name }}</b> · {{ me.club }} <span class="cat">{{ me.category_label }}</span></div>
+    <a class="btn ghost small" href="{{ url_for('profile_clear') }}">Rimuovi</a></div>{% endif %}
+  <form class="filters" method="get">
+    <input type="hidden" name="next" value="{{ next }}">
+    <input name="q" value="{{ q }}" placeholder="Nome o cognome (es. Rossi)" autofocus style="flex:1">
+    <button class="btn">Cerca</button>
+  </form>
+  {% if q and not results %}<p class="muted">Nessun giocatore trovato.</p>{% endif %}
+  {% if results %}
+  <div class="card table-wrap"><table>
+    <thead><tr><th>Giocatore</th><th class="hide-sm">Circolo</th><th>Cat.</th><th></th></tr></thead>
+    {% for p in results %}
+    <tr><td><b>{{ p.name }}</b><div class="muted small">{{ p.city }}, {{ p.region }}</div></td>
+      <td class="hide-sm small">{{ p.club }}</td><td><span class="cat">{{ p.category_label }}</span></td>
+      <td class="num"><form method="post"><input type="hidden" name="player_id" value="{{ p.id }}"><input type="hidden" name="next" value="{{ next }}">
+        <button class="btn lime small">Sono io</button></form></td></tr>
+    {% endfor %}
+  </table></div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% from "_macros.html" import player_link %}
+{% block title %}Posizione · {{ p.name }}{% endblock %}
+{% block content %}
+<h1>{{ p.name }}</h1>
+<p class="muted">{{ p.club }} · {{ p.region }}</p>
+{% include "ranking_tabs.html" %}
+<div class="grid g2">
+{% for pos in positions %}
+  <div class="card {{ 'dark' if loop.first }}">
+    <div class="muted small">{{ pos.label }}</div>
+    <div class="kpi" {% if loop.first %}style="color:var(--lime)"{% endif %}>{{ pos.position }}° <span class="muted small" style="font-weight:400">su {{ pos.total }}</span></div>
+    <div class="muted small">Top {{ pos.top }}% · ordinamento per categoria simulata e coefficiente</div>
+    <table style="margin-top:10px">
+      {% for n in pos.neighbours %}{% set r = rank(n.id) %}
+        <tr class="{{ 'me' if n.id == p.id }}"><td>{{ player_link(n) }}</td><td><span class="cat">{{ r.new_label }}</span></td><td class="num small">{{ r.coefficient }}</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+{% endfor %}
+</div>
+{% endblock %}

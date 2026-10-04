@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "_macros.html" import delta %}
+{% block title %}Giocatori · TennisSim{% endblock %}
+{% block content %}
+<h1>Esplora i giocatori italiani</h1>
+<p class="muted">{{ total }} giocatori ordinati per classifica simulata.</p>
+<form class="filters">
+  <select name="gender"><option value="">Tutti</option><option value="M" {{ 'selected' if gender == 'M' }}>Maschile</option><option value="F" {{ 'selected' if gender == 'F' }}>Femminile</option></select>
+  <select name="region"><option value="">Tutte le regioni</option>{% for r in regions %}<option {{ 'selected' if r == region }}>{{ r }}</option>{% endfor %}</select>
+  <button class="btn">Filtra</button>
+  <a class="muted small" href="{{ url_for('search') }}">Ricerca avanzata →</a>
+</form>
+<div class="card table-wrap"><table>
+  <thead><tr><th class="num">#</th><th>Giocatore</th><th class="hide-sm">Circolo</th><th>Ufficiale</th><th>Simulata</th><th class="num">Coeff.</th></tr></thead>
+  {% for p in players %}
+    <tr class="{{ 'me' if me and me.id == p.id }}"><td class="num muted">{{ offset + loop.index }}</td>
+      <td><a href="{{ url_for('player', pid=p.id) }}"><b>{{ p.name }}</b></a><div class="muted small">{{ p.city }}, {{ p.region }}</div></td>
+      <td class="hide-sm small">{{ p.club }}</td>
+      <td><span class="cat">{{ p.category_label }}</span></td>
+      <td>{% set res = rank(p.id) %}<span class="cat lime">{{ res.new_label }}</span> {{ delta(res.delta) }}</td>
+      <td class="num">{{ res.coefficient }}</td></tr>
+  {% endfor %}
+</table></div>
+<div class="pager">
+  {% if page > 1 %}<a class="btn ghost small" href="?page={{ page - 1 }}&region={{ region }}&gender={{ gender }}">← Precedente</a>{% endif %}
+  <span class="muted small" style="align-self:center">Pagina {{ page }} di {{ pages }}</span>
+  {% if page < pages %}<a class="btn ghost small" href="?page={{ page + 1 }}&region={{ region }}&gender={{ gender }}">Successiva →</a>{% endif %}
+</div>
+{% endblock %}

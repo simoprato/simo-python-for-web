@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Competizioni · TennisSim{% endblock %}
+{% block content %}
+<h1>Cerca le competizioni</h1>
+<form class="filters">
+  <input name="q" value="{{ f.q }}" placeholder="Nome, città o circolo">
+  <select name="when"><option value="future" {{ 'selected' if f.when == 'future' }}>In programma</option><option value="past" {{ 'selected' if f.when == 'past' }}>Concluse</option></select>
+  <select name="region"><option value="">Tutte le regioni</option>{% for r in regions %}<option {{ 'selected' if r == f.region }}>{{ r }}</option>{% endfor %}</select>
+  <select name="surface"><option value="">Tutte le superfici</option>{% for s in surfaces %}<option {{ 'selected' if s == f.surface }}>{{ s }}</option>{% endfor %}</select>
+  <select name="kind"><option value="">Tutti i limiti</option>{% for k in kinds %}<option {{ 'selected' if k == f.kind }}>{{ k }}</option>{% endfor %}</select>
+  <select name="gender"><option value="">M/F</option><option value="M" {{ 'selected' if f.gender == 'M' }}>Maschile</option><option value="F" {{ 'selected' if f.gender == 'F' }}>Femminile</option></select>
+  <button class="btn">Cerca</button>
+</form>
+<p class="muted small">{{ total }} tornei trovati{% if total > 60 %}, mostrati i primi 60{% endif %}.</p>
+<div class="grid g3">
+  {% for t in tournaments %}
+  <a class="card tile" href="{{ url_for('competition', tid=t.id) }}">
+    <div class="row between"><span class="pill dark">{{ t.kind }}</span><span class="pill">{{ t.gender_label }}</span></div>
+    <h3 style="margin-top:12px">{{ t.name }}</h3>
+    <div class="muted small">{{ t.city }} ({{ t.region }}) · {{ t.surface }}</div>
+    <div class="small" style="margin-top:8px">{{ t.start|d }} → {{ t.end|d }}</div>
+    <div class="muted small">{% if t.end < today %}🏆 {{ players[t.champion].name }}{% else %}{{ t.entrants|length }} iscritti · scadenza {{ t.deadline|d }}{% endif %}</div>
+  </a>
+  {% else %}<p class="muted">Nessun torneo corrisponde ai filtri.</p>{% endfor %}
+</div>
+{% endblock %}

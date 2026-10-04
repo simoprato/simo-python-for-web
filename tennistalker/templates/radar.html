@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Radar Tornei · TennisSim{% endblock %}
+{% block content %}
+<h1>Radar Tornei</h1>
+<p class="muted">I tornei a cui {{ p.name }} ({{ p.category_label }}) può iscriversi, con uno score 0–100: punti in palio rispetto alle vittorie già conteggiate, probabilità di avanzare (rating Elo per superficie), adattamento alla superficie, distanza e tempistica.</p>
+<form class="filters">
+  <input type="hidden" name="id" value="{{ p.id }}">
+  <select name="surface"><option value="">Tutte le superfici</option>{% for s in surfaces %}<option {{ 'selected' if s == surface }}>{{ s }}</option>{% endfor %}</select>
+  <button class="btn">Filtra</button>
+</form>
+<div class="stack">
+{% for it in items %}{% set t = it.tournament %}
+  <div class="card">
+    <div class="row between">
+      <div class="row">
+        <div class="score-ring" style="--v: {{ it.score }}"><b>{{ it.score }}</b></div>
+        <div>
+          <h3 style="margin:0"><a href="{{ url_for('competition', tid=t.id) }}">{{ t.name }}</a></h3>
+          <div class="muted small">{{ t.kind }} · {{ t.city }} ({{ t.region }}) · {{ t.surface }} · {{ t.start|d }}</div>
+          <div class="muted small">{{ it.field }} iscritti · migliori: {% for c in it.field_cats %}<span class="cat">{{ c|catlabel }}</span> {% endfor %}</div>
+        </div>
+      </div>
+      <div style="min-width:280px; flex:1; max-width:420px">
+        {% for n, v, w in it.parts %}
+          <div class="meter"><span>{{ n }} <span class="muted">({{ w }}%)</span></span><div class="bar"><i style="width: {{ v }}%"></i></div><span class="num small">{{ v }}</span></div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+{% else %}<div class="card muted">Nessun torneo compatibile in programma.</div>{% endfor %}
+</div>
+{% endblock %}

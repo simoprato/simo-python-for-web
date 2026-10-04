@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% from "_macros.html" import ranking_header, wins_table, player_link %}
+{% block title %}Classifica simulata · {{ p.name }}{% endblock %}
+{% block content %}
+<h1>{{ p.name }}</h1>
+<p class="muted">{{ p.club }} · {{ p.region }}</p>
+{% include "ranking_tabs.html" %}
+<div class="stack">
+  {{ ranking_header(res, "Classifica simulata in tempo reale", "Partite dal 1 gen al " ~ (today|d) ~ " · avversari alla categoria ufficiale") }}
+  <div class="grid g2">
+    <div class="card"><h3>Vittorie che contano</h3>{{ wins_table(res, players) }}</div>
+    <div class="card"><h3>Tutte le partite {{ today.year }}</h3>
+      <div class="table-wrap"><table>
+        {% for m in matches|reverse %}
+          {% set won = m.winner == p.id %}
+          <tr><td class="small">{{ m.date|d }}</td><td><span class="{{ 'V' if won else 'S' }}">{{ 'V' if won else 'S' }}</span></td>
+            <td>{{ player_link(players[m.opponent(p.id)]) }} <span class="cat">{{ (m.loser_cat if won else m.winner_cat)|catlabel }}</span></td>
+            <td class="small num">{{ m.player_view(p.id)|score }}</td></tr>
+        {% else %}<tr><td class="muted">Nessuna partita quest'anno.</td></tr>{% endfor %}
+      </table></div>
+    </div>
+  </div>
+  <div class="card small muted">
+    <b>Come funziona.</b> Ogni vittoria vale da 10 a 120 punti in base alla differenza di categoria con l'avversario
+    (+2 o più: 120 · +1: 90 · pari: 60 · −1: 40 · −2: 30 · −3: 20 · oltre: 10). Si sommano le migliori K vittorie
+    (K = 6 + (vittorie − sconfitte)/2, tra 4 e 14) più i bonus. Promozione se il coefficiente supera la soglia
+    della propria categoria (doppia oltre 1,8×), retrocessione se resta sotto la soglia di permanenza con almeno 4 partite.
+  </div>
+</div>
+{% endblock %}

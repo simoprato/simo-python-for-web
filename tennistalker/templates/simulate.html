@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% from "_macros.html" import player_link, form_dots %}
+{% block title %}Simula Partita · TennisSim{% endblock %}
+{% block content %}
+<h1>Simula Partita</h1>
+<p class="muted">{{ p.name }} <span class="cat">{{ p.category_label }}</span> contro chi? Studia l'avversario e simula il match 2.000 volte, punto per punto.</p>
+<form class="filters">
+  <input type="hidden" name="id" value="{{ p.id }}">
+  <input name="q" value="{{ q }}" placeholder="Cerca avversario per nome">
+  <button class="btn">Cerca</button>
+</form>
+{% if candidates and not result %}
+<div class="card table-wrap"><h3>{{ 'Risultati' if q else 'Avversari recenti' }}</h3><table>
+  {% for o in candidates %}<tr><td>{{ player_link(o) }}<div class="muted small">{{ o.club }}</div></td><td><span class="cat">{{ o.category_label }}</span></td>
+    <td class="num"><a class="btn lime small" href="?id={{ p.id }}&opp={{ o.id }}&surface={{ surface }}&fmt={{ fmt }}">Simula</a></td></tr>{% endfor %}
+</table></div>
+{% endif %}
+
+{% if result %}
+<div class="stack">
+  <form class="filters">
+    <input type="hidden" name="id" value="{{ p.id }}"><input type="hidden" name="opp" value="{{ opp.id }}">
+    <label class="f">Superficie<select name="surface">{% for s in surfaces %}<option {{ 'selected' if s == surface }}>{{ s }}</option>{% endfor %}</select></label>
+    <label class="f">Formato<select name="fmt"><option value="mtb" {{ 'selected' if fmt == 'mtb' }}>2 set + match tie-break</option><option value="full" {{ 'selected' if fmt == 'full' }}>2 set su 3</option></select></label>
+    <button class="btn" style="align-self:flex-end">Ricalcola</button>
+  </form>
+  <div class="card dark">
+    <div class="row between">
+      <div><div class="muted small">Tu</div><h2>{{ p.name }}</h2><span class="cat">{{ p.category_label }}</span> <span class="muted small">Elo {{ result.rating_me }}</span></div>
+      <div style="font-size:22px; font-weight:900">VS</div>
+      <div style="text-align:right"><div class="muted small">Avversario</div><h2>{{ opp.name }}</h2><span class="cat">{{ opp.category_label }}</span> <span class="muted small">Elo {{ result.rating_opp }}</span></div>
+    </div>
+    {% set wp = (result.win_prob * 100)|round|int %}
+    <div class="prob-bar" style="margin-top:16px">
+      <div class="a" style="width: {{ [wp, 1]|max }}%">{% if wp >= 12 %}{{ wp }}%{% endif %}</div>
+      <div class="b" style="width: {{ [100 - wp, 1]|max }}%">{% if wp <= 88 %}{{ 100 - wp }}%{% endif %}</div>
+    </div>
+    <div class="grid g4" style="margin-top:16px">
+      <div><div class="muted small">Vinci in 2 set</div><div class="kpi">{{ result.straight_win|pct }}</div></div>
+      <div><div class="muted small">Si va al terzo</div><div class="kpi">{{ result.decider|pct }}</div></div>
+      <div><div class="muted small">Almeno un tie-break</div><div class="kpi">{{ result.tiebreak|pct }}</div></div>
+      <div><div class="muted small">Punti al servizio</div><div class="kpi">{{ result.serve_me|pct }}</div><div class="muted small">lui/lei {{ result.serve_opp|pct }}</div></div>
+    </div>
+  </div>
+  <div class="grid g3">
+    <div class="card"><h3>Punteggi più probabili</h3><table>
+      {% for sc, pr in result.top_scores %}<tr><td>{{ sc }}</td><td class="num">{{ pr|pct(1) }}</td></tr>{% endfor %}</table></div>
+    <div class="card"><h3>Cosa c'è in palio</h3>
+      <p>Una vittoria vale <b>{{ result.stake.value }} punti</b> e aggiungerebbe <b>{{ result.stake.gain }}</b> al tuo coefficiente
+      ({{ result.stake.coefficient }} → {{ result.stake.coefficient + result.stake.gain }}, soglia {{ result.stake.promotion_at }}).</p>
+      <h3>Testa a testa</h3>
+      {% for m in result.h2h %}<div class="small"><span class="{{ 'V' if m.winner == p.id else 'S' }}">{{ 'V' if m.winner == p.id else 'S' }}</span> {{ m.date|d }} · {{ m.player_view(p.id)|score }}</div>
+      {% else %}<p class="muted small">Mai affrontati.</p>{% endfor %}
+    </div>
+    <div class="card"><h3>Avversari in comune</h3>
+      <table>{% for c in result.common[:8] %}<tr><td>{{ player_link(c.opponent) }}</td><td class="small">tu <span class="{{ 'V' if c.me else 'S' }}">{{ 'V' if c.me else 'S' }}</span></td><td class="small">lui/lei <span class="{{ 'V' if c.them else 'S' }}">{{ 'V' if c.them else 'S' }}</span></td></tr>
+      {% else %}<tr><td class="muted small">Nessuno.</td></tr>{% endfor %}</table>
+    </div>
+  </div>
+  <div class="grid g2">
+    <div class="card dark"><h3 style="color:var(--lime)">🎯 Piano di gioco</h3><ul class="checks">{% for t in result.tactics %}<li>{{ t }}</li>{% endfor %}</ul></div>
+    <div class="card"><h3>Scouting di {{ opp.first }}</h3>
+      <p class="small">Forma: {{ form_dots(result.opp_profile.stats.form) }}</p>
+      {% for n, v in result.opp_profile.axes %}<div class="meter"><span>{{ n }}</span><div class="bar"><i style="width: {{ v }}%"></i></div><span class="num small">{{ v }}</span></div>{% endfor %}
+      {% if result.opp_profile.weaknesses %}<p class="small" style="margin-top:12px"><b>Punti deboli:</b> {{ result.opp_profile.weaknesses|join('; ') }}</p>{% endif %}
+      <a class="small" href="{{ url_for('analysis', id=opp.id) }}">Analisi completa →</a>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card dark" style="max-width:560px">
+  <h1>Attiva Club Membership</h1>
+  <div class="price">{{ price }} <small>/anno</small></div>
+  <p class="muted">Questa è una simulazione: non viene richiesto alcun dato di pagamento e non c'è nessun addebito.
+  La membership resta attiva nella sessione del browser finché non la disdici.</p>
+  <form method="post"><button class="btn lime big">Attiva (simulazione)</button></form>
+</div>
+{% endblock %}

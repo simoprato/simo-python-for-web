@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% from "_macros.html" import player_link, form_dots %}
+{% block title %}Forze & Debolezze · {{ p.name }}{% endblock %}
+{% block content %}
+<h1>Forze & Debolezze</h1>
+<p class="muted">{{ p.name }} · {{ s.played }} partite negli ultimi 13 mesi · {{ s.wins }}V–{{ s.losses }}S · forma {{ form_dots(s.form) }}</p>
+<div class="stack">
+<div class="grid g2">
+  <div class="card">
+    <svg viewBox="0 0 {{ chart.width }} {{ chart.height }}" width="100%" style="max-width:540px; display:block; margin:auto" role="img" aria-label="Profilo di gioco">
+      {% for r in chart.rings %}<polygon points="{{ r }}" fill="none" stroke="#e4e4de"/>{% endfor %}
+      {% for x, y in chart.spokes %}<line x1="{{ chart.c }}" y1="{{ chart.cy }}" x2="{{ x }}" y2="{{ y }}" stroke="#e4e4de"/>{% endfor %}
+      <polygon points="{{ chart.points }}" fill="#d7ff4f" fill-opacity=".7" stroke="#1c1c1c" stroke-width="2"/>
+      {% for x, y, anchor, name, v in chart.labels %}<text x="{{ x }}" y="{{ y }}" text-anchor="{{ anchor }}" font-size="10.5" fill="#141414">{{ name }} <tspan font-weight="700">{{ v }}</tspan></text>{% endfor %}
+    </svg>
+    <p class="muted small">Valori 0–100 (percentuali di vittoria con correzione per campioni piccoli).</p>
+  </div>
+  <div class="stack">
+    <div class="card dark"><h3 style="color:var(--lime)">💪 Forze</h3>
+      <ul class="checks">{% for x in prof.strengths %}<li>{{ x }}</li>{% else %}<li class="muted">Nessun punto di forza netto con i dati disponibili.</li>{% endfor %}</ul></div>
+    <div class="card"><h3>⚠️ Debolezze</h3>
+      <ul class="checks">{% for x in prof.weaknesses %}<li>{{ x }}</li>{% else %}<li class="muted">Nessuna debolezza evidente.</li>{% endfor %}</ul></div>
+  </div>
+</div>
+<div class="grid g3">
+  <div class="card"><h3>Per superficie</h3><table>
+    {% for surf, wl in s.surface.items() %}<tr><td>{{ surf }}</td><td class="num">{{ wl[0] }}–{{ wl[1] }}</td></tr>{% endfor %}</table></div>
+  <div class="card"><h3>Per avversario</h3><table>
+    <tr><td>Categoria superiore</td><td class="num">{{ s.vs.higher[0] }}–{{ s.vs.higher[1] }}</td></tr>
+    <tr><td>Stessa categoria</td><td class="num">{{ s.vs.equal[0] }}–{{ s.vs.equal[1] }}</td></tr>
+    <tr><td>Categoria inferiore</td><td class="num">{{ s.vs.lower[0] }}–{{ s.vs.lower[1] }}</td></tr></table></div>
+  <div class="card"><h3>Momenti chiave</h3><table>
+    <tr><td>Tie-break</td><td class="num">{{ s.tiebreak[0] }}–{{ s.tiebreak[1] }}</td></tr>
+    <tr><td>Set decisivi</td><td class="num">{{ s.decider[0] }}–{{ s.decider[1] }}</td></tr>
+    <tr><td>Dopo primo set perso</td><td class="num">{{ s.first_set_lost[0] }}–{{ s.first_set_lost[1] }}</td></tr>
+    <tr><td>Set vinti / persi</td><td class="num">{{ s.sets[0] }}–{{ s.sets[1] }}</td></tr>
+    <tr><td>Game vinti / persi</td><td class="num">{{ s.games[0] }}–{{ s.games[1] }}</td></tr></table></div>
+</div>
+<div class="grid g2">
+  <div class="card"><h3>Migliori vittorie</h3><table>
+    {% for e in s.best_wins %}<tr><td>{{ player_link(e.opponent) }} <span class="cat">{{ e.opp_cat|catlabel }}</span></td><td class="small num">{{ e.match.player_view(p.id)|score }}</td></tr>{% else %}<tr><td class="muted">—</td></tr>{% endfor %}</table></div>
+  <div class="card"><h3>Sconfitte peggiori</h3><table>
+    {% for e in s.worst_losses %}<tr><td>{{ player_link(e.opponent) }} <span class="cat">{{ e.opp_cat|catlabel }}</span></td><td class="small num">{{ e.match.player_view(p.id)|score }}</td></tr>{% else %}<tr><td class="muted">—</td></tr>{% endfor %}</table></div>
+</div>
+</div>
+{% endblock %}

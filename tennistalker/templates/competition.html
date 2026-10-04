@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% from "_macros.html" import player_link %}
+{% block title %}{{ t.name }} · TennisSim{% endblock %}
+{% block content %}
+<div class="stack">
+  <div class="card dark">
+    <div class="row between">
+      <div>
+        <span class="pill lime">{{ t.kind }}</span> <span class="pill">{{ t.gender_label }}</span>
+        <h1 style="margin-top:10px">{{ t.name }}</h1>
+        <div class="muted">{{ t.club }} · {{ t.city }}, {{ t.region }} · {{ t.surface }}</div>
+        <div class="muted small">{{ t.start|d }} → {{ t.end|d }} · categorie ammesse fino a {{ t.max_category|catlabel }}
+          · terzo set {{ 'match tie-break a 10' if t.match_tiebreak else 'set intero' }}</div>
+      </div>
+      {% if radar %}<div class="score-ring" style="--v: {{ radar.score }}"><b>{{ radar.score }}</b></div>{% endif %}
+    </div>
+    {% if radar %}<div class="muted small" style="margin-top:10px">Radar Tornei per {{ me.name }}: {% for n, v, w in radar.parts %}{{ n }} {{ v }}{{ ' · ' if not loop.last }}{% endfor %}</div>{% endif %}
+  </div>
+  {% if t.champion %}
+  <div class="card row"><span class="pill lime">🏆 Vincitore</span> <b>{{ player_link(players[t.champion]) }}</b>
+    <span class="muted">· finalista {{ player_link(players[t.finalist]) }}</span></div>
+  {% endif %}
+  {% if rounds %}
+    <div class="grid g2">
+    {% for name, ms in rounds.items()|reverse %}
+      <div class="card"><h3>{{ name }}</h3><table>
+        {% for m in ms %}<tr><td><b>{{ player_link(players[m.winner]) }}</b> <span class="cat">{{ m.winner_cat|catlabel }}</span><br>
+          <span class="muted">b. {{ player_link(players[m.loser]) }}</span> <span class="cat">{{ m.loser_cat|catlabel }}</span></td><td class="num small">{{ m.sets|score }}</td></tr>{% endfor %}
+      </table></div>
+    {% endfor %}
+    </div>
+  {% else %}
+    <div class="card"><h3>Iscritti ({{ entrants|length }}/{{ t.draw_size }})</h3>
+      <p class="muted small">Iscrizioni entro il {{ t.deadline|d }}.</p>
+      <table>{% for e in entrants %}<tr class="{{ 'me' if me and me.id == e.id }}"><td>{{ player_link(e) }}</td><td class="small muted">{{ e.club }}</td><td><span class="cat">{{ e.category_label }}</span></td></tr>{% endfor %}</table>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

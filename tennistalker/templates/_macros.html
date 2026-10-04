@@ -1,0 +1,71 @@
+{% macro delta(d) -%}
+  {%- if d > 0 %}<span class="up">▲ {{ d }}</span>{% elif d < 0 %}<span class="down">▼ {{ -d }}</span>{% else %}<span class="muted">=</span>{% endif -%}
+{%- endmacro %}
+
+{% macro player_link(p) -%}
+  <a href="{{ url_for('player', pid=p.id) }}">{{ p.name }}</a>
+{%- endmacro %}
+
+{% macro form_dots(form) -%}
+  <span class="form-dots">{% for f in form %}<span class="{{ f }}">{{ f }}</span>{% endfor %}</span>
+{%- endmacro %}
+
+{% macro ranking_header(res, title, subtitle) %}
+<div class="card dark">
+  <div class="row between">
+    <div>
+      <div class="muted small">{{ subtitle }}</div>
+      <h2 style="margin-top:4px">{{ title }}</h2>
+    </div>
+    <div class="row">
+      <span class="cat big">{{ res.base_label }}</span>
+      <span style="font-size:26px">→</span>
+      <span class="cat big lime">{{ res.new_label }}</span>
+    </div>
+  </div>
+  <div class="grid g4" style="margin-top:18px">
+    <div><div class="muted small">Coefficiente</div><div class="kpi">{{ res.coefficient }}</div></div>
+    <div><div class="muted small">Soglia promozione</div><div class="kpi">{{ res.promotion_at }}</div></div>
+    <div><div class="muted small">Soglia permanenza</div><div class="kpi">{{ res.retention_at }}</div></div>
+    <div><div class="muted small">Vittorie / sconfitte</div><div class="kpi">{{ res.wins }}–{{ res.losses }}</div></div>
+  </div>
+  <div style="margin-top:16px">
+    <div class="bar"><i style="width: {{ res.progress }}%"></i></div>
+    <div class="muted small" style="margin-top:6px">
+      {% if res.to_promotion %}Mancano <b style="color:#fff">{{ res.to_promotion }}</b> punti alla promozione{% else %}Soglia di promozione raggiunta{% endif %}
+      · conteggiate le migliori {{ res.k }} vittorie
+    </div>
+  </div>
+  {% for n in res.notes %}<div class="muted small" style="margin-top:6px">ℹ︎ {{ n }}</div>{% endfor %}
+</div>
+{% endmacro %}
+
+{% macro wins_table(res, players) %}
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Data</th><th>Avversario</th><th>Cat. considerata</th><th class="num">Punti</th></tr></thead>
+  <tbody>
+  {% for w in res.counted %}
+    <tr class="{{ 'projected' if w.projected }}">
+      <td>{{ w.date|d }}</td>
+      <td>{% if w.projected %}Vittoria proiettata{% else %}{{ player_link(players[w.opponent]) }}{% endif %}</td>
+      <td>{% if w.opponent_cat is not none %}<span class="cat">{{ w.opponent_cat|catlabel }}</span>{% else %}—{% endif %}</td>
+      <td class="num"><b>{{ w.value }}</b></td>
+    </tr>
+  {% endfor %}
+  {% for w in res.discarded %}
+    <tr class="discarded {{ 'projected' if w.projected }}">
+      <td>{{ w.date|d }}</td>
+      <td>{% if w.projected %}Vittoria proiettata{% else %}{{ players[w.opponent].name }}{% endif %}</td>
+      <td>{% if w.opponent_cat is not none %}{{ w.opponent_cat|catlabel }}{% else %}—{% endif %}</td>
+      <td class="num">{{ w.value }}</td>
+    </tr>
+  {% endfor %}
+  {% for name, v in res.bonus_detail %}
+    <tr><td colspan="3">Bonus · {{ name }}</td><td class="num"><b>+{{ v }}</b></td></tr>
+  {% endfor %}
+  {% if not res.counted and not res.bonus_detail %}<tr><td colspan="4" class="muted">Nessuna vittoria nel periodo.</td></tr>{% endif %}
+  </tbody>
+</table>
+</div>
+{% endmacro %}

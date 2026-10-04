@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card dark" style="max-width:640px">
+  <span class="pill lime">🔒 Club Membership</span>
+  <h1 style="margin-top:14px">{{ feature[1] }}</h1>
+  <p class="muted">{{ feature[2] }} Questa funzionalità è inclusa nella Club Membership ({{ price }}/anno).</p>
+  <a class="btn lime big" href="{{ url_for('membership') }}">Sblocca la membership</a>
+</div>
+{% endblock %}

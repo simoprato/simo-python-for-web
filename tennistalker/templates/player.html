@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% from "_macros.html" import delta, player_link %}
+{% block title %}{{ p.name }} · TennisSim{% endblock %}
+{% block content %}
+<div class="stack">
+  <div class="card dark">
+    <div class="row between">
+      <div>
+        <div class="muted small">{{ 'Giocatore' if p.gender == 'M' else 'Giocatrice' }} · {{ today.year - p.birth_year }} anni</div>
+        <h1 style="margin-top:4px">{{ p.name }}</h1>
+        <div class="muted">{{ p.club }} · {{ p.city }}, {{ p.region }}</div>
+      </div>
+      <div class="row"><span class="cat big">{{ res.base_label }}</span><span style="font-size:26px">→</span><span class="cat big lime">{{ res.new_label }}</span> {{ delta(res.delta) }}</div>
+    </div>
+    <div class="row" style="margin-top:16px">
+      <a class="btn lime small" href="{{ url_for('realtime', id=p.id) }}">Classifica simulata</a>
+      <a class="btn ghost small" href="{{ url_for('harmonized', id=p.id) }}">Armonizzata {% if not premium %}🔒{% endif %}</a>
+      <a class="btn ghost small" href="{{ url_for('analysis', id=p.id) }}">Forze & Debolezze {% if not premium %}🔒{% endif %}</a>
+      <a class="btn ghost small" href="{{ url_for('positions', id=p.id) }}">Posizione {% if not premium %}🔒{% endif %}</a>
+      {% if me and me.id != p.id and me.gender == p.gender %}<a class="btn ghost small" href="{{ url_for('simulate', opp=p.id) }}">Simula partita contro {{ p.first }} {% if not premium %}🔒{% endif %}</a>{% endif %}
+    </div>
+  </div>
+  <div class="card">
+    <h3>Ultime partite</h3>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Data</th><th></th><th>Avversario</th><th class="hide-sm">Torneo</th><th class="num">Punteggio</th></tr></thead>
+      {% for m in recent %}{% set won = m.winner == p.id %}
+        <tr><td class="small">{{ m.date|d }}</td><td><span class="{{ 'V' if won else 'S' }}">{{ 'V' if won else 'S' }}</span></td>
+          <td>{{ player_link(players[m.opponent(p.id)]) }} <span class="cat">{{ (m.loser_cat if won else m.winner_cat)|catlabel }}</span></td>
+          <td class="hide-sm small"><a href="{{ url_for('competition', tid=m.tournament_id) }}">{{ tournaments[m.tournament_id].name }}</a> · {{ m.round }}</td>
+          <td class="num small">{{ m.player_view(p.id)|score }}</td></tr>
+      {% else %}<tr><td class="muted">Nessuna partita registrata.</td></tr>{% endfor %}
+    </table></div>
+  </div>
+</div>
+{% endblock %}

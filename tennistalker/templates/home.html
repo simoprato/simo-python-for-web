@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% from "_macros.html" import delta %}
+{% block content %}
+<div class="stack">
+  {% if me and summary %}
+  <div class="card dark">
+    <div class="row between">
+      <div>
+        <div class="muted small">Ciao {{ me.first }} · {{ me.club }}</div>
+        <h1 style="margin-top:4px">La tua classifica simulata</h1>
+      </div>
+      <div class="row">
+        <span class="cat big">{{ summary.base_label }}</span><span style="font-size:26px">→</span>
+        <span class="cat big lime">{{ summary.new_label }}</span> {{ delta(summary.delta) }}
+      </div>
+    </div>
+    <div style="margin-top:14px"><div class="bar"><i style="width: {{ summary.progress }}%"></i></div>
+      <div class="muted small" style="margin-top:6px">Coefficiente {{ summary.coefficient }} / {{ summary.promotion_at }} · {{ summary.wins }}V–{{ summary.losses }}S nel {{ today.year }}</div></div>
+  </div>
+  {% else %}
+  <div class="card dark">
+    <h1>Simula il tuo anno tennistico</h1>
+    <p class="muted">Classifica in tempo reale, proiezioni a fine anno, radar dei tornei e simulazione delle partite.
+      Scegli un giocatore come tuo profilo per iniziare.</p>
+    <a class="btn lime" href="{{ url_for('profile') }}">Scegli il tuo profilo</a>
+  </div>
+  {% endif %}
+
+  <div class="row between"><h2>Funzionalità</h2>
+    {% if not premium %}<a class="btn lime" href="{{ url_for('membership') }}">Sblocca la membership</a>{% endif %}</div>
+  <div class="grid g3">
+    {% for ep, title, desc, is_premium in features %}
+      <a class="card tile {{ 'dark' if is_premium }}" href="{{ url_for(ep) }}">
+        {% if is_premium %}<span class="lock pill {{ 'lime' if premium else 'dark' }}">{{ 'Club' if premium else '🔒 Club' }}</span>{% else %}<span class="lock pill">Base</span>{% endif %}
+        <h3 style="padding-right:70px">{{ title }}</h3>
+        <div class="muted small">{{ desc }}</div>
+      </a>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

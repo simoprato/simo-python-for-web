@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Ricerca avanzata · TennisSim{% endblock %}
+{% block content %}
+<h1>Ricerca avanzata</h1>
+{% if not premium %}
+<div class="card dark row between" style="margin-bottom:16px">
+  <div>Piano Base: ricerca solo per nome, massimo {{ limit }} risultati. I filtri avanzati sono riservati al Club.</div>
+  <a class="btn lime small" href="{{ url_for('membership') }}">Sblocca la membership</a>
+</div>
+{% endif %}
+{% if locked_used %}<div class="flash">🔒 I filtri avanzati sono stati ignorati: servono la Club Membership.</div>{% endif %}
+<form class="filters">
+  <label class="f">Nome<input name="q" value="{{ q }}" placeholder="es. Marco Rossi"></label>
+  <fieldset {{ 'disabled' if not premium }} style="border:0; padding:0; margin:0; display:contents">
+    <label class="f">Regione<select name="region"><option value="">Tutte</option>{% for r in regions %}<option {{ 'selected' if r == a.region }}>{{ r }}</option>{% endfor %}</select></label>
+    <label class="f">Circolo<input name="club" value="{{ a.club }}" placeholder="es. Le Querce"></label>
+    <label class="f">Sesso<select name="gender"><option value="">Tutti</option><option value="M" {{ 'selected' if a.gender == 'M' }}>M</option><option value="F" {{ 'selected' if a.gender == 'F' }}>F</option></select></label>
+    <label class="f">Cat. da<select name="cmin"><option value="">—</option>{% for c in cat.CATEGORIES %}<option value="{{ loop.index0 }}" {{ 'selected' if a.cmin == loop.index0|string }}>{{ c }}</option>{% endfor %}</select></label>
+    <label class="f">Cat. a<select name="cmax"><option value="">—</option>{% for c in cat.CATEGORIES %}<option value="{{ loop.index0 }}" {{ 'selected' if a.cmax == loop.index0|string }}>{{ c }}</option>{% endfor %}</select></label>
+    <label class="f">Età da<input name="amin" type="number" value="{{ a.amin }}" style="width:80px"></label>
+    <label class="f">Età a<input name="amax" type="number" value="{{ a.amax }}" style="width:80px"></label>
+    <label class="f">Trend<select name="trend"><option value="">Tutti</option><option value="up" {{ 'selected' if a.trend == 'up' }}>In promozione</option><option value="down" {{ 'selected' if a.trend == 'down' }}>In retrocessione</option></select></label>
+    <label class="f">Ordina per<select name="sort">
+      {% for v, l in [('category', 'Classifica simulata'), ('coefficient', 'Coefficiente'), ('winrate', '% vittorie'), ('elo', 'Rating Elo'), ('name', 'Cognome')] %}<option value="{{ v }}" {{ 'selected' if a.sort == v }}>{{ l }}</option>{% endfor %}</select></label>
+  </fieldset>
+  <button class="btn" style="align-self:flex-end">Cerca</button>
+</form>
+{% if results %}
+<p class="muted small">{{ total }} risultati{% if total > limit %}, mostrati i primi {{ limit }}{% endif %}.</p>
+<div class="card table-wrap"><table>
+  <thead><tr><th>Giocatore</th><th class="hide-sm">Circolo</th><th class="num">Età</th><th>Ufficiale</th><th>Simulata</th>{% if premium %}<th class="num">Elo</th><th class="num">% V</th>{% endif %}</tr></thead>
+  {% for x in results %}{% set r = rank(x.id) %}
+  <tr><td><a href="{{ url_for('player', pid=x.id) }}"><b>{{ x.name }}</b></a><div class="muted small">{{ x.city }}, {{ x.region }}</div></td>
+    <td class="hide-sm small">{{ x.club }}</td><td class="num">{{ today.year - x.birth_year }}</td>
+    <td><span class="cat">{{ x.category_label }}</span></td><td><span class="cat lime">{{ r.new_label }}</span></td>
+    {% if premium %}{% set st = analytics.stats(x.id) %}<td class="num">{{ analytics.elo[x.id]|round|int }}</td><td class="num">{{ (st.wins / ([st.played, 1]|max))|pct }}</td>{% endif %}</tr>
+  {% endfor %}
+</table></div>
+{% elif request.args %}<p class="muted">Nessun risultato.</p>{% endif %}
+{% endblock %}

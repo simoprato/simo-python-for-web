@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}TennisSim Club{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="{{ url_for('home') }}"><span class="logo">TS</span> TennisSim</a>
+    <div class="nav-links">
+      {% set ep = request.endpoint %}
+      <a href="{{ url_for('realtime') }}" class="{{ 'active' if ep == 'realtime' }}">Classifica</a>
+      <a href="{{ url_for('players') }}" class="{{ 'active' if ep in ('players', 'player') }}">Giocatori</a>
+      <a href="{{ url_for('competitions') }}" class="{{ 'active' if ep in ('competitions', 'competition') }}">Competizioni</a>
+      <a href="{{ url_for('radar') }}" class="{{ 'active' if ep == 'radar' }}">Radar</a>
+      <a href="{{ url_for('simulate') }}" class="{{ 'active' if ep == 'simulate' }}">Simula</a>
+      <a href="{{ url_for('analysis') }}" class="{{ 'active' if ep == 'analysis' }}">Analisi</a>
+      <a href="{{ url_for('search') }}" class="{{ 'active' if ep == 'search' }}">Ricerca</a>
+    </div>
+    <div class="nav-me">
+      {% if me %}<a href="{{ url_for('player', pid=me.id) }}">{{ me.name }}</a> <span class="cat">{{ me.category_label }}</span>{% else %}<a href="{{ url_for('profile') }}">Scegli profilo</a>{% endif %}
+      {% if premium %}<span class="pill lime">Club</span>{% else %}<a class="btn lime small" href="{{ url_for('membership') }}">Club Membership</a>{% endif %}
+    </div>
+  </div>
+</nav>
+<main>
+  {% with msgs = get_flashed_messages(with_categories=true) %}
+    {% for c, m in msgs %}<div class="flash {{ c }}">{{ m }}</div>{% endfor %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+<footer>
+  TennisSim Club · simulazione didattica con giocatori, circoli e tornei inventati · dati al {{ today|d }}.<br>
+  Il regolamento di classifica è una versione semplificata ispirata a quello FITP: non è una classifica ufficiale.
+</footer>
+</body>
+</html>

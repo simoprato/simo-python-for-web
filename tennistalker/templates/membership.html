@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Club Membership · TennisSim{% endblock %}
+{% block content %}
+<h1>Scegli il tuo piano</h1>
+<p class="muted">Simulazione: l'attivazione non comporta alcun pagamento.</p>
+<div class="pricing" style="margin-top:20px">
+  <div class="card">
+    <span class="logo">TS</span>
+    <h2 style="margin-top:14px">Base</h2>
+    <div class="price">0€</div>
+    <div class="muted small">Gratis, per sempre.</div>
+    <span class="plan-tag">{{ 'Piano attuale' if not premium else 'Piano gratuito' }}</span>
+    <ul class="checks">
+      {% for ep, title, desc, p in features if not p %}<li>{{ title }}</li>{% endfor %}
+    </ul>
+  </div>
+  <div class="card dark">
+    <span class="logo">TS</span>
+    <h2 style="margin-top:14px">Club Membership</h2>
+    <div class="price">{{ price }} <small>/anno</small></div>
+    <div class="muted small">Pagamento annuale. Disdici quando vuoi.</div>
+    {% if premium %}
+      <form method="post" action="{{ url_for('cancel') }}" style="margin-top:14px"><button class="btn big ghost">Disdici membership</button></form>
+    {% else %}
+      <a class="btn lime big" style="margin-top:14px" href="{{ url_for('checkout') }}">Sblocca la membership</a>
+    {% endif %}
+    <ul class="checks">
+      <li><b>Tutti i vantaggi Base</b></li>
+      {% for ep, title, desc, p in features if p %}<li><a href="{{ url_for(ep) }}" style="text-decoration:none"><b>{{ title }}</b></a>, <span class="muted">{{ desc|lower }}</span></li>{% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}

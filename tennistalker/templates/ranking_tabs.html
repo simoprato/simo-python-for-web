@@ -1,0 +1,7 @@
+<div class="row" style="margin-bottom:16px">
+  {% set q = '?id=' ~ p.id %}
+  <a class="btn {{ '' if request.endpoint == 'realtime' else 'ghost' }} small" href="{{ url_for('realtime') }}{{ q }}">Simulata</a>
+  <a class="btn {{ '' if request.endpoint == 'harmonized' else 'ghost' }} small" href="{{ url_for('harmonized') }}{{ q }}">Armonizzata {% if not premium %}🔒{% endif %}</a>
+  <a class="btn {{ '' if request.endpoint == 'supersimulated' else 'ghost' }} small" href="{{ url_for('supersimulated') }}{{ q }}">Supersimulata {% if not premium %}🔒{% endif %}</a>
+  <a class="btn {{ '' if request.endpoint == 'positions' else 'ghost' }} small" href="{{ url_for('positions') }}{{ q }}">Posizione {% if not premium %}🔒{% endif %}</a>
+</div>

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% from "_macros.html" import ranking_header, wins_table, player_link %}
+{% block title %}Classifica Armonizzata · {{ p.name }}{% endblock %}
+{% block content %}
+<h1>{{ p.name }}</h1>
+<p class="muted">{{ p.club }} · {{ p.region }}</p>
+{% include "ranking_tabs.html" %}
+<div class="stack">
+  {{ ranking_header(projected, "Dove sarai a fine anno", "Classifica Armonizzata · proiezione al 31 dic " ~ today.year) }}
+  <div class="grid g3">
+    <div class="card"><div class="muted small">Simulata (cat. ufficiali)</div><div class="kpi">{{ official.new_label }}</div><div class="muted small">coeff. {{ official.coefficient }}</div></div>
+    <div class="card"><div class="muted small">Armonizzata ad oggi</div><div class="kpi">{{ today_res.new_label }}</div><div class="muted small">coeff. {{ today_res.coefficient }}</div></div>
+    <div class="card dark"><div class="muted small">Armonizzata a fine anno</div><div class="kpi" style="color:var(--lime)">{{ projected.new_label }}</div><div class="muted small">coeff. {{ projected.coefficient }}</div></div>
+  </div>
+  <div class="grid g2">
+    <div class="card"><h3>Avversari ricalcolati</h3>
+      <p class="muted small">L'armonizzazione valuta ogni avversario con la sua classifica simulata, non con quella ufficiale di inizio anno.</p>
+      <table>
+        <thead><tr><th>Avversario</th><th>Ufficiale</th><th>Simulata</th></tr></thead>
+        {% for w in changed %}<tr><td>{{ player_link(players[w.opponent]) }}</td><td><span class="cat">{{ players[w.opponent].category_label }}</span></td><td><span class="cat lime">{{ w.opponent_cat|catlabel }}</span></td></tr>
+        {% else %}<tr><td colspan="3" class="muted">Nessun avversario battuto ha cambiato categoria.</td></tr>{% endfor %}
+      </table>
+    </div>
+    <div class="card"><h3>Vittorie conteggiate (con proiezione)</h3>{{ wins_table(projected, players) }}</div>
+  </div>
+</div>
+{% endblock %}
