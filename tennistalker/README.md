@@ -37,17 +37,25 @@ competizione, stato di forma) e **ricostruisce** partite che rispettano esattame
 punteggi sono ricostruiti, perché il testo non li contiene. Il tuo profilo diventa quello predefinito e tutte le
 funzionalità lavorano su di lui.
 
+Puoi incollare anche la pagina riepilogo del profilo (con "Punti FITP", "Classifica Simulata" e
+"Supersimulata"): l'app mostrerà un confronto tra quei valori e i propri.
+
 I valori estratti vengono salvati in `data/il_mio_profilo.json`, che è escluso da git: i tuoi dati non finiscono nel
 repository. Per usare un altro percorso imposta la variabile d'ambiente `TENNISSIM_PROFILE`.
 
-## Regolamento di classifica (semplificato, ispirato a quello FITP)
+## Regolamento di classifica (metodo FITP)
 
-- Categorie dalla 4.NC alla 2.1.
-- Valore vittoria in base alla differenza di categoria con l'avversario: +2 o più → 120, +1 → 90, pari → 60, −1 → 40, −2 → 30, −3 → 20, oltre → 10.
-- Si sommano le migliori **K** vittorie, con K = 6 + (vittorie − sconfitte) / 2 (tra 4 e 14), più i bonus (torneo vinto +25, finale +10, nessuna sconfitta con categorie inferiori +20).
-- Promozione se il coefficiente ≥ `300 + 20 × indice categoria` (doppia oltre 1,8×); retrocessione sotto il 40% della soglia con almeno 4 partite.
-
-Non è il regolamento ufficiale: i valori sono stati scelti per produrre una distribuzione plausibile di promozioni e retrocessioni.
+- Valore di ogni vittoria in base a quante classifiche separano l'avversario dalla propria: +2 o più → 120, +1 → 90,
+  pari → 60, −1 → 30, −2 → 20, −3 → 15, oltre → 0.
+- Si contano le migliori N vittorie: N di base dipende dalla classifica (6 per 4.6, 7 per 4.2/4.1, 9 per 3.1, 16 per 2.1)
+  più le vittorie supplementari dalla formula V − E − 2I − 3G (E, I, G = sconfitte con pari, una e due o più classifiche
+  inferiori). In 4ª categoria: 4–10 → +1, 11–15 → +2, 16–20 → +3, 21+ → +4; in 3ª: 5–12, 13–18, 19–24, 25+.
+- Bonus per assenza di sconfitte con pari o inferiori (almeno 5 incontri): +50 in 4ª categoria.
+- Soglie maschili di promozione/retrocessione: 4.NC 80, 4.6 110/60, 4.5 210/90, 4.4 300/120, 4.3 380/190, 4.1 505/255,
+  3.5 580. Se si supera la soglia si sale e si **ricalcola sulla nuova classifica** (anche più volte).
+- Valori stimati (non trovati nel metodo ufficiale): soglie di 4.2 e dalla 3.4 in su, retrocessione 3.5, alcune
+  vittorie di base, tabella supplementari e bonus di 2ª/3ª categoria. Sono in `engine/ranking.py`.
+- Per il profilo reale l'armonizzazione non ricalcola gli avversari: quelli ricostruiti non sono le persone reali.
 
 ## Struttura
 

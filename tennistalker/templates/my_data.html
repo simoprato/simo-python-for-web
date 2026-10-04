@@ -33,6 +33,23 @@
     </div>
   </div>
 
+  {% if compare %}{% set ref = compare.ref %}
+  <div class="card">
+    <h3>Confronto con i valori dell'app di origine</h3>
+    <div class="table-wrap"><table>
+      <thead><tr><th></th><th class="num">App di origine</th><th class="num">TennisSim</th></tr></thead>
+      {% if ref.simulated %}<tr><td>Classifica simulata</td><td class="num"><span class="cat">{{ ref.simulated }}</span></td>
+        <td class="num"><span class="cat lime">{{ compare.realtime.new_label }}</span> {{ '✓' if ref.simulated == compare.realtime.new_label else '≠' }}</td></tr>{% endif %}
+      {% if ref.points is defined %}<tr><td>Punti</td><td class="num">{{ ref.points }}</td><td class="num">{{ compare.realtime.coefficient }} ({{ '%+d'|format(compare.realtime.coefficient - ref.points) }})</td></tr>{% endif %}
+      {% if ref.promotion_at %}<tr><td>Soglia per la prossima promozione</td><td class="num">{{ ref.promotion_at }}</td><td class="num">{{ compare.realtime.promotion_at or '—' }} {{ '✓' if ref.promotion_at == compare.realtime.promotion_at else '≠' }}</td></tr>{% endif %}
+      {% if ref.supersimulated %}<tr><td>Supersimulata (ora)</td><td class="num"><span class="cat">{{ ref.supersimulated }}</span></td>
+        <td class="num"><span class="cat lime">{{ compare.super.new_label }}</span> {{ '✓' if ref.supersimulated == compare.super.new_label else '≠' }}</td></tr>{% endif %}
+    </table></div>
+    <p class="muted small">Le piccole differenze di punti dipendono dalle partite ricostruite: le statistiche indicano solo la fascia dell'avversario
+      ("2 o più classifiche"), non la classifica esatta, e l'app di origine usa la classifica attuale degli avversari reali.</p>
+  </div>
+  {% endif %}
+
   <div class="grid g2">
     <div class="card">
       <h3>Controllo della ricostruzione</h3>
@@ -51,14 +68,15 @@
         <li><b>Reali:</b> nome, fascia d'età, classifica, circolo, regione, vittorie/sconfitte per classifica dell'avversario, per numero di set, per superficie e per tipo di competizione, stato di forma.</li>
         <li><b>Ricostruiti:</b> date, avversari (presi dal mondo simulato con la categoria giusta), punteggi e suddivisione nei tornei. "2 o più classifiche" è trattato come esattamente 2.</li>
         <li><b>Stato di forma</b> letto da sinistra (partita più vecchia) a destra (più recente).</li>
-        <li>Le classifiche sono calcolate con il <b>regolamento semplificato</b> di questa app, non con quello ufficiale FITP.</li>
+        <li>Le classifiche seguono il <b>metodo FITP</b> (punti per vittoria, vittorie utili e supplementari, soglie); alcune soglie di 3ª e 2ª categoria sono stimate.</li>
         <li>I dati restano in <code>data/il_mio_profilo.json</code> sul tuo computer e sono esclusi da git.</li>
       </ul>
     </div>
   </div>
   {% else %}
   <p class="muted">Apri la pagina del tuo profilo su un'app di ranking (ad esempio Tennistalker), seleziona tutto il testo della pagina (Ctrl+A / Cmd+A), copialo e incollalo qui sotto.
-    L'app legge nome, classifica, circolo e statistiche e ricostruisce le tue partite.</p>
+    L'app legge nome, classifica, circolo e statistiche e ricostruisce le tue partite. Puoi incollare anche la pagina riepilogo
+    (con "Punti FITP" e "Classifica Simulata"): servirà per confrontare i risultati.</p>
   {% endif %}
 
   <div class="card">

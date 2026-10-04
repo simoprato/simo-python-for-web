@@ -34,6 +34,35 @@ class ProfileParseError(ValueError):
     pass
 
 
+class ReferenceOnly(ProfileParseError):
+    """Il testo è la pagina riepilogo: contiene i valori di riferimento ma non le statistiche."""
+
+    def __init__(self, name, category, reference):
+        super().__init__("Pagina riepilogo senza statistiche dettagliate")
+        self.name, self.category, self.reference = name, category, reference
+
+
+_CAT = r"(4\.NC|[1-4]\.\d)"
+
+
+def parse_reference(text):
+    """Valori calcolati dall'app di origine (punti, classifica simulata...) da usare per il confronto."""
+    ref = {}
+    m = re.search(r"Punti FITP\s*(\d+)", text)
+    if m:
+        ref["points"] = int(m.group(1))
+    m = re.search(r"Classifica Simulata\s*(?:i\s*)?" + _CAT, text)
+    if m:
+        ref["simulated"] = m.group(1)
+    m = re.search(r"Classifica Supersimulata\s*(?:i\s*)?Ora\s*" + _CAT, text)
+    if m:
+        ref["supersimulated"] = m.group(1)
+    m = re.search(r"Ti mancano\s*(\d+)\s*punti su\s*(\d+)", text)
+    if m:
+        ref["missing"], ref["promotion_at"] = int(m.group(1)), int(m.group(2))
+    return ref
+
+
 def _wl(text, label):
     m = re.search(re.escape(label) + r"\s*(\d+)\s*Vinte\s*(\d+)\s*Perse", text)
     return [int(m.group(1)), int(m.group(2))] if m else None
@@ -66,12 +95,15 @@ def parse_profile_text(text):
     if category not in cat.CATEGORIES:
         raise ProfileParseError(f"Classifica {category} non supportata (gestite dalla 4.NC alla 2.1).")
 
+    reference = parse_reference(text)
     vs = {}
     for label, diff in REL_LABELS:
         wl = _wl(text, label)
         if wl:
             vs[str(diff)] = wl
     if not vs:
+        if reference:
+            raise ReferenceOnly(name, category, reference)
         raise ProfileParseError("Non trovo le statistiche 'Vinte/Perse in base alla classifica dell'avversario'.")
 
     def opt(pattern, group=1, conv=str):
@@ -99,6 +131,7 @@ def parse_profile_text(text):
         "form": opt(r"Ultimi 10 match\s*\n?\s*([VS]{1,10})\b"),
         "tournaments": opt(r"Tornei giocati nel periodo considerato\s*(\d+)", conv=int),
         "max_category": [max_cat.group(1), int(max_cat.group(2))] if max_cat else None,
+        "reference": reference,
     }
     profile["wins"] = sum(v[0] for v in vs.values())
     profile["losses"] = sum(v[1] for v in vs.values())

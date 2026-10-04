@@ -232,7 +232,7 @@ def generate_world(today=None, seed=2026, n_players=900):
         city = rng.choice(REGIONS[region])
         category = rng.choices(range(len(CATEGORY_WEIGHTS)), weights=CATEGORY_WEIGHTS)[0]
         # la skill reale si discosta dalla categoria: alcuni sono in crescita, altri in calo
-        skill = category_rating(category) + rng.gauss(0, 30) + rng.gauss(8, 30)
+        skill = category_rating(category) + rng.gauss(0, 22) + rng.gauss(4, 18)
         bonus = {s: rng.gauss(0, 22) for s in SURFACES}
         players.append(Player(
             id=pid, first=first, last=last, gender=gender,
@@ -241,7 +241,7 @@ def generate_world(today=None, seed=2026, n_players=900):
             category=category, skill=skill, surface_bonus=bonus,
             clutch=max(-1, min(1, rng.gauss(0, 0.5))),
             stamina=max(-1, min(1, rng.gauss(0, 0.5))),
-            activity=rng.randint(3, 14),
+            activity=rng.randint(6, 18),
         ))
 
     # --- tornei e partite ---
@@ -253,7 +253,7 @@ def generate_world(today=None, seed=2026, n_players=900):
     tid = mid = 0
     week = first_monday
     while week <= last_day:
-        for gender, count in (("M", 4), ("F", 2)):
+        for gender, count in (("M", 7), ("F", 3)):
             for _ in range(count):
                 tid += 1
                 region = rng.choices(region_names, weights=[REGION_WEIGHTS[r] for r in region_names])[0]
@@ -278,7 +278,7 @@ def generate_world(today=None, seed=2026, n_players=900):
                 def weight(p):
                     w = max(0.05, p.activity * (today - first_monday).days / 365 - played[p.id])
                     w *= 1.0 if p.region == region else 0.08
-                    w *= 1.0 if max_cat - p.category <= 6 else 0.25
+                    w *= 0.6 ** max(0, (max_cat - p.category) - 2)  # vicini al limite del torneo
                     return w
 
                 # campionamento pesato senza reinserimento (Efraimidis-Spirakis)

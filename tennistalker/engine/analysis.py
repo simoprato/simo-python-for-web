@@ -187,7 +187,7 @@ class Analytics:
         """Cosa vale la vittoria in classifica."""
         p = self.world.players[pid]
         rt = self.ranking.realtime(pid)
-        value = win_value(p.category, self.world.players[opp_id].category)
+        value = win_value(rt.new_category, self.world.players[opp_id].category)
         counted_vals = sorted((w.value for w in rt.counted), reverse=True)
         if len(counted_vals) < rt.k:
             gain = value
@@ -239,7 +239,7 @@ class Analytics:
             exp_values, win_probs = [], []
             for o in field_ids:
                 po = _expected(rating, self.rating(o, t.surface))
-                v = win_value(p.category, self.world.players[o].category)
+                v = win_value(cur.new_category, self.world.players[o].category)
                 exp_values.append(po * max(0, v - min_counted))
                 win_probs.append(po)
             opportunity = min(1, (sum(exp_values) / len(exp_values)) / 60)

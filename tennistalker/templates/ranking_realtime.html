@@ -21,10 +21,11 @@
     </div>
   </div>
   <div class="card small muted">
-    <b>Come funziona.</b> Ogni vittoria vale da 10 a 120 punti in base alla differenza di categoria con l'avversario
-    (+2 o più: 120 · +1: 90 · pari: 60 · −1: 40 · −2: 30 · −3: 20 · oltre: 10). Si sommano le migliori K vittorie
-    (K = 6 + (vittorie − sconfitte)/2, tra 4 e 14) più i bonus. Promozione se il coefficiente supera la soglia
-    della propria categoria (doppia oltre 1,8×), retrocessione se resta sotto la soglia di permanenza con almeno 4 partite.
+    <b>Come funziona (metodo FITP).</b> Ogni vittoria vale in base a quante classifiche separano l'avversario dalla tua:
+    +2 o più 120 · +1 90 · pari 60 · −1 30 · −2 20 · −3 15 · oltre 0. Si sommano le migliori N vittorie (base per classifica, es. 7 per un 4.1)
+    più le vittorie supplementari date da V − E − 2I − 3G (E, I, G = sconfitte con pari, una e due o più classifiche inferiori), più il bonus
+    per assenza di sconfitte con pari o inferiori. Se raggiungi la soglia di promozione sali di una classifica e i punti vengono ricalcolati sulla nuova.
+    Alcune soglie di 3ª e 2ª categoria sono stimate.
   </div>
 </div>
 {% endblock %}

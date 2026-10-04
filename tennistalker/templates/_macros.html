@@ -24,18 +24,20 @@
     </div>
   </div>
   <div class="grid g4" style="margin-top:18px">
-    <div><div class="muted small">Coefficiente</div><div class="kpi">{{ res.coefficient }}</div></div>
-    <div><div class="muted small">Soglia promozione</div><div class="kpi">{{ res.promotion_at }}</div></div>
-    <div><div class="muted small">Soglia permanenza</div><div class="kpi">{{ res.retention_at }}</div></div>
+    <div><div class="muted small">Punti (calcolati da {{ res.new_label if res.delta > 0 else res.base_label }})</div><div class="kpi">{{ res.coefficient }}</div></div>
+    <div><div class="muted small">Promozione{% if res.promotion_at %} a {{ ((res.new_category if res.delta > 0 else res.base_category) + 1)|catlabel }}{% endif %}</div>
+      <div class="kpi">{{ res.promotion_at or '—' }}</div></div>
+    <div><div class="muted small">Retrocessione (≤)</div><div class="kpi">{{ res.retention_at if res.retention_at is not none else '—' }}</div></div>
     <div><div class="muted small">Vittorie / sconfitte</div><div class="kpi">{{ res.wins }}–{{ res.losses }}</div></div>
   </div>
   <div style="margin-top:16px">
     <div class="bar"><i style="width: {{ res.progress }}%"></i></div>
     <div class="muted small" style="margin-top:6px">
-      {% if res.to_promotion %}Mancano <b style="color:#fff">{{ res.to_promotion }}</b> punti alla promozione{% else %}Soglia di promozione raggiunta{% endif %}
-      · conteggiate le migliori {{ res.k }} vittorie
+      {% if res.promotion_at %}Ti mancano <b style="color:#fff">{{ res.to_promotion }}</b> punti su {{ res.promotion_at }} per la promozione{% else %}Classifica massima del motore{% endif %}
+      · migliori {{ res.k }} vittorie{% if res.formula %} ({{ res.k - res.formula[5] }} di base + {{ res.formula[5] }} supplementari: V−E−2I−3G = {{ res.formula[0] }}−{{ res.formula[1] }}−2×{{ res.formula[2] }}−3×{{ res.formula[3] }} = {{ res.formula[4] }}){% endif %}
     </div>
   </div>
+  {% if res.steps|length > 1 %}<div class="muted small" style="margin-top:6px">Ricalcoli: {% for c, pts in res.steps %}{{ c|catlabel }} → {{ pts }} punti{{ ' · ' if not loop.last }}{% endfor %}</div>{% endif %}
   {% for n in res.notes %}<div class="muted small" style="margin-top:6px">ℹ︎ {{ n }}</div>{% endfor %}
 </div>
 {% endmacro %}

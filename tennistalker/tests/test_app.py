@@ -58,13 +58,34 @@ def test_stronger_player_wins_more():
 
 
 def test_win_values_and_thresholds():
-    assert win_value(5, 9) == 120
-    assert win_value(5, 6) == 90
-    assert win_value(5, 5) == 60
-    assert win_value(5, 0) == 10
-    assert wins_counted(20, 0) == 14
-    assert wins_counted(0, 10) == 4
-    assert promotion_threshold(10) > promotion_threshold(0)
+    i41, i35 = cat.index("4.1"), cat.index("3.5")
+    assert win_value(i41, i41 + 3) == 120
+    assert win_value(i41, i41 + 1) == 90
+    assert win_value(i41, i41) == 60
+    assert [win_value(i41, i41 - d) for d in (1, 2, 3, 4)] == [30, 20, 15, 0]
+    assert wins_counted(i41, 12, e=3, i=1, g=0) == 8   # 7 di base + 1 (12−3−2 = 7)
+    assert wins_counted(i41, 25) == 11                  # 7 + 4
+    assert wins_counted(i35, 12, e=2, i=3, g=1) == 8    # risultato 1: nessuna supplementare
+    assert promotion_threshold(i41) == 505 and promotion_threshold(i35) == 580
+    assert promotion_threshold(cat.index("4.NC")) == 80
+
+
+def test_fitp_promotion_recalculates_on_new_category(world):
+    """Caso reale: 4.1 con 12V–11S → 510 punti da 4.1, promosso e ricalcolato a 3.5 (290)."""
+    from types import SimpleNamespace
+    from engine.data import Match
+    i41 = cat.index("4.1")
+    me = SimpleNamespace(id=-1, category=i41)
+    spec = [(1, 2, 0), (0, 2, 5), (1, 1, 2), (0, 1, 2), (1, 0, 5), (0, 0, 3), (1, -1, 3), (0, -1, 1), (1, -2, 2)]
+    ms = []
+    for won, diff, n in spec:
+        for _ in range(n):
+            w, l = (-1, -2) if won else (-2, -1)
+            wc, lc = (i41, i41 + diff) if won else (i41 + diff, i41)
+            ms.append(Match(len(ms), TODAY, None, "", w, l, [(6, 4, None), (6, 4, None)], "Cemento", wc, lc))
+    res = compute(me, ms, world)
+    assert res.steps == [(i41, 510), (i41 + 1, 290)]
+    assert res.new_label == "3.5" and res.coefficient == 290 and res.promotion_at == 580
 
 
 def test_world_is_deterministic(world):
@@ -97,8 +118,7 @@ def test_promotion_logic(world):
     ms = world.player_matches(p.id)
     wins = [m for m in ms if m.winner == p.id]
     res = compute(p, wins, world, opponent_category=lambda _: cat.MAX_IDX)
-    if res.coefficient >= res.promotion_at:
-        assert res.new_category > p.category or p.category == cat.MAX_IDX
+    assert res.new_category >= p.category  # solo vittorie: mai retrocessione
 
 
 def test_positions_are_consistent(app, world):
@@ -138,7 +158,7 @@ def login(client, pid, premium=False):
 def test_home_always_links_my_data(client, world):
     login(client, active_player(world).id)  # anche con un giocatore simulato scelto
     html = client.get("/").get_data(as_text=True)
-    assert 'href="/i-miei-dati"' in html and "Importa i miei dati" in html and "v1.1" in html
+    assert 'href="/i-miei-dati"' in html and "Importa i miei dati" in html and "v1.2" in html
 
 
 def test_free_pages(client, world):
@@ -337,3 +357,51 @@ def test_import_error_shows_message(tmp_path):
     r = a.test_client().post("/i-miei-dati", data={"action": "import", "text": "testo a caso"})
     assert r.status_code == 200 and "Non trovo" in r.get_data(as_text=True)
     assert not (tmp_path / "p.json").exists()
+
+
+SAMPLE_SUMMARY = """Mario Bianchi
+O40
+[4.2](https://example.it/classifiche?rank=4.2)
+Statistiche base
+Vittorie
+55%
+Punti FITP
+250
+Classifica
+Classifica Simulata
+i
+4.1
+1da inizio anno
+Ti mancano 255 punti su 505 necessari per essere promossi
+Classifica Supersimulata
+i
+Ora
+4.1
+"""
+
+
+def test_summary_page_adds_reference_and_comparison(tmp_path):
+    a = create_app(today=TODAY, profile_path=tmp_path / "p.json")
+    c = a.test_client()
+    # senza statistiche importate prima, la pagina riepilogo da sola non basta
+    r = c.post("/i-miei-dati", data={"action": "import", "text": SAMPLE_SUMMARY})
+    assert "pagina riepilogo" in r.get_data(as_text=True)
+    c.post("/i-miei-dati", data={"action": "import", "text": SAMPLE_PROFILE})
+    r = c.post("/i-miei-dati", data={"action": "import", "text": SAMPLE_SUMMARY})
+    assert r.status_code == 302
+    ref = a.config["PROFILE"]["reference"]
+    assert ref == {"points": 250, "simulated": "4.1", "supersimulated": "4.1", "missing": 255, "promotion_at": 505}
+    html = c.get("/i-miei-dati").get_data(as_text=True)
+    assert "Confronto con i valori" in html
+    # reimportare le statistiche conserva il confronto
+    c.post("/i-miei-dati", data={"action": "import", "text": SAMPLE_PROFILE})
+    assert a.config["PROFILE"]["reference"]["points"] == 250
+
+
+def test_real_profile_is_not_harmonized_with_fake_opponents(tmp_path):
+    from engine.personal import PERSONAL_ID
+    a = create_app(today=TODAY, profile_path=tmp_path / "p.json")
+    a.test_client().post("/i-miei-dati", data={"action": "import", "text": SAMPLE_PROFILE})
+    r = a.config["RANKING"]
+    today_res, _ = r.harmonized(PERSONAL_ID)
+    assert today_res.coefficient == r.realtime(PERSONAL_ID).coefficient

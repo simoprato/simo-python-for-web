@@ -16,12 +16,12 @@ from engine import categories as cat
 from engine.analysis import Analytics
 from engine.charts import radar_chart, step_chart
 from engine.data import REGIONS, SURFACES, TOURNAMENT_KINDS, generate_world
-from engine.personal import (PERSONAL_ID, ProfileParseError, add_personal_player, delete_profile,
+from engine.personal import (PERSONAL_ID, ProfileParseError, ReferenceOnly, add_personal_player, delete_profile,
                              load_profile, parse_profile_text, save_profile)
 from engine.ranking import RankingService
 from engine.simulation import format_score
 
-VERSION = "1.1"
+VERSION = "1.2"
 PRICE = "79,99€"
 MONTHS = ["gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic"]
 
@@ -260,6 +260,20 @@ def create_app(today=None, seed=2026, profile_path=None):
             text = request.form.get("text", "")
             try:
                 profile = parse_profile_text(text)
+                old = app.config.get("PROFILE") or {}
+                if not profile.get("reference") and old.get("name") == profile["name"]:
+                    profile["reference"] = old.get("reference")  # conserva il confronto già importato
+            except ReferenceOnly as e:
+                old = app.config.get("PROFILE")
+                if not old or old.get("name") != e.name:
+                    flash("Questa è la pagina riepilogo: incolla prima la pagina con le statistiche "
+                          "(Vinte/Perse in base alla classifica dell'avversario).", "error")
+                    return render_template("my_data.html", text=text, profile=None, check=None)
+                old["reference"] = {**(old.get("reference") or {}), **e.reference}
+                save_profile(profile_path, old)
+                build()
+                flash("Valori di riferimento aggiornati: confronto disponibile qui sotto.", "ok")
+                return redirect(url_for("my_data"))
             except ProfileParseError as e:
                 flash(str(e), "error")
                 return render_template("my_data.html", text=text, profile=None, check=None)
@@ -275,7 +289,11 @@ def create_app(today=None, seed=2026, profile_path=None):
         check = None
         if profile and PERSONAL_ID in world.players:
             check = _reconstruction_check(world, profile)
-        return render_template("my_data.html", text="", profile=profile, check=check,
+        compare = None
+        if check is not None and (profile.get("reference") or {}):
+            compare = {"ref": profile["reference"], "realtime": ranking.realtime(PERSONAL_ID),
+                       "super": ranking.supersimulated(PERSONAL_ID)["now"]}
+        return render_template("my_data.html", text="", profile=profile, check=check, compare=compare,
                                p=world.players.get(PERSONAL_ID))
 
     # ------------------------------------------------------------------ PREMIUM

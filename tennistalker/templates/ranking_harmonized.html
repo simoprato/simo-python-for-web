@@ -8,16 +8,17 @@
 <div class="stack">
   {{ ranking_header(projected, "Dove sarai a fine anno", "Classifica Armonizzata · proiezione al 31 dic " ~ today.year) }}
   <div class="grid g3">
-    <div class="card"><div class="muted small">Simulata (cat. ufficiali)</div><div class="kpi">{{ official.new_label }}</div><div class="muted small">coeff. {{ official.coefficient }}</div></div>
-    <div class="card"><div class="muted small">Armonizzata ad oggi</div><div class="kpi">{{ today_res.new_label }}</div><div class="muted small">coeff. {{ today_res.coefficient }}</div></div>
-    <div class="card dark"><div class="muted small">Armonizzata a fine anno</div><div class="kpi" style="color:var(--lime)">{{ projected.new_label }}</div><div class="muted small">coeff. {{ projected.coefficient }}</div></div>
+    <div class="card"><div class="muted small">Simulata (cat. ufficiali)</div><div class="kpi">{{ official.new_label }}</div><div class="muted small">{{ official.coefficient }} punti</div></div>
+    <div class="card"><div class="muted small">Armonizzata ad oggi</div><div class="kpi">{{ today_res.new_label }}</div><div class="muted small">{{ today_res.coefficient }} punti</div></div>
+    <div class="card dark"><div class="muted small">Armonizzata a fine anno</div><div class="kpi" style="color:var(--lime)">{{ projected.new_label }}</div><div class="muted small">{{ projected.coefficient }} punti</div></div>
   </div>
   <div class="grid g2">
     <div class="card"><h3>Avversari ricalcolati</h3>
-      <p class="muted small">L'armonizzazione valuta ogni avversario con la sua classifica simulata, non con quella ufficiale di inizio anno.</p>
+      {% if p.real %}<p class="muted small">Profilo con dati reali: gli avversari ricostruiti non sono le persone reali, quindi non vengono armonizzati. Resta la proiezione a fine anno.</p>
+      {% else %}<p class="muted small">L'armonizzazione valuta ogni avversario con la sua classifica simulata, non con quella ufficiale di inizio anno.</p>{% endif %}
       <table>
         <thead><tr><th>Avversario</th><th>Ufficiale</th><th>Simulata</th></tr></thead>
-        {% for w in changed %}<tr><td>{{ player_link(players[w.opponent]) }}</td><td><span class="cat">{{ players[w.opponent].category_label }}</span></td><td><span class="cat lime">{{ w.opponent_cat|catlabel }}</span></td></tr>
+        {% for w in (changed if not p.real else []) %}<tr><td>{{ player_link(players[w.opponent]) }}</td><td><span class="cat">{{ players[w.opponent].category_label }}</span></td><td><span class="cat lime">{{ w.opponent_cat|catlabel }}</span></td></tr>
         {% else %}<tr><td colspan="3" class="muted">Nessun avversario battuto ha cambiato categoria.</td></tr>{% endfor %}
       </table>
     </div>
