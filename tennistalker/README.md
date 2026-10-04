@@ -28,6 +28,18 @@ Scegli un giocatore come tuo profilo (*Scegli profilo* → *Sono io*), poi attiv
 | Club | Ricerca avanzata senza restrizioni | `/ricerca` | Base: solo nome, 5 risultati. Club: regione, circolo, sesso, categoria, età, trend, ordinamenti |
 | Club | 15% sconto Tennis Warehouse Europe | `/sconto` | Codice coupon fittizio generato per il membro |
 
+## I tuoi dati reali
+
+Nella pagina **I miei dati** (`/i-miei-dati`) puoi incollare il testo della pagina profilo di un'app di ranking
+(seleziona tutto con Ctrl+A / Cmd+A, copia e incolla). L'app estrae nome, fascia d'età, classifica, circolo, regione e
+le statistiche aggregate (vinte/perse per classifica dell'avversario, per numero di set, per superficie, per tipo di
+competizione, stato di forma) e **ricostruisce** partite che rispettano esattamente quei totali. Date, avversari e
+punteggi sono ricostruiti, perché il testo non li contiene. Il tuo profilo diventa quello predefinito e tutte le
+funzionalità lavorano su di lui.
+
+I valori estratti vengono salvati in `data/il_mio_profilo.json`, che è escluso da git: i tuoi dati non finiscono nel
+repository. Per usare un altro percorso imposta la variabile d'ambiente `TENNISSIM_PROFILE`.
+
 ## Regolamento di classifica (semplificato, ispirato a quello FITP)
 
 - Categorie dalla 4.NC alla 2.1.
@@ -46,6 +58,7 @@ engine/
   data.py        generazione del mondo sintetico (giocatori, circoli, tornei, tabelloni)
   ranking.py     coefficiente, armonizzata, supersimulata, posizioni
   analysis.py    Elo, Forze & Debolezze, Simula Partita, Radar Tornei
+  personal.py    lettura del profilo reale incollato e ricostruzione delle partite
   charts.py      coordinate dei grafici SVG
 app.py           route Flask e controllo accessi Base/Club
 templates/, static/style.css

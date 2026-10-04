@@ -19,6 +19,7 @@
       <a href="{{ url_for('simulate') }}" class="{{ 'active' if ep == 'simulate' }}">Simula</a>
       <a href="{{ url_for('analysis') }}" class="{{ 'active' if ep == 'analysis' }}">Analisi</a>
       <a href="{{ url_for('search') }}" class="{{ 'active' if ep == 'search' }}">Ricerca</a>
+      <a href="{{ url_for('my_data') }}" class="{{ 'active' if ep == 'my_data' }}">I miei dati</a>
     </div>
     <div class="nav-me">
       {% if me %}<a href="{{ url_for('player', pid=me.id) }}">{{ me.name }}</a> <span class="cat">{{ me.category_label }}</span>{% else %}<a href="{{ url_for('profile') }}">Scegli profilo</a>{% endif %}

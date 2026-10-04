@@ -19,7 +19,7 @@
     <h3 style="margin-top:12px">{{ t.name }}</h3>
     <div class="muted small">{{ t.city }} ({{ t.region }}) · {{ t.surface }}</div>
     <div class="small" style="margin-top:8px">{{ t.start|d }} → {{ t.end|d }}</div>
-    <div class="muted small">{% if t.end < today %}🏆 {{ players[t.champion].name }}{% else %}{{ t.entrants|length }} iscritti · scadenza {{ t.deadline|d }}{% endif %}</div>
+    <div class="muted small">{% if t.end < today %}{% if t.champion %}🏆 {{ players[t.champion].name }}{% else %}{{ t.kind }}{% endif %}{% else %}{{ t.entrants|length }} iscritti · scadenza {{ t.deadline|d }}{% endif %}</div>
   </a>
   {% else %}<p class="muted">Nessun torneo corrisponde ai filtri.</p>{% endfor %}
 </div>

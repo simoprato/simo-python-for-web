@@ -93,6 +93,8 @@ class Player:
     clutch: float          # rendimento nei momenti decisivi (-1..1)
     stamina: float         # tenuta fisica nel set decisivo (-1..1)
     activity: int          # tornei per anno desiderati
+    age_group: str = None  # fascia d'età (es. O30) se nota
+    real: bool = False     # True per il profilo con dati reali dell'utente
 
     @property
     def name(self):
@@ -172,6 +174,19 @@ class World:
         for m in self.matches:
             self.matches_by_player[m.winner].append(m)
             self.matches_by_player[m.loser].append(m)
+
+    def add(self, player, tournaments, matches):
+        """Aggiunge un giocatore con i suoi tornei e partite, mantenendo gli indici ordinati."""
+        self.players[player.id] = player
+        self.matches_by_player[player.id] = []
+        for t in tournaments:
+            self.tournaments[t.id] = t
+        self.matches = sorted(self.matches + list(matches), key=lambda m: (m.date, m.id))
+        self.matches_by_player = {pid: [] for pid in self.players}
+        for m in self.matches:
+            self.matches_by_player[m.winner].append(m)
+            self.matches_by_player[m.loser].append(m)
+        self.clubs = sorted({(p.club, p.city, p.region) for p in self.players.values()})
 
     def player_matches(self, pid, start=None, end=None):
         out = self.matches_by_player.get(pid, [])

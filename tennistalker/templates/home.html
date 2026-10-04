@@ -22,7 +22,8 @@
     <h1>Simula il tuo anno tennistico</h1>
     <p class="muted">Classifica in tempo reale, proiezioni a fine anno, radar dei tornei e simulazione delle partite.
       Scegli un giocatore come tuo profilo per iniziare.</p>
-    <a class="btn lime" href="{{ url_for('profile') }}">Scegli il tuo profilo</a>
+    <div class="row"><a class="btn lime" href="{{ url_for('my_data') }}">Importa i tuoi dati reali</a>
+      <a class="btn ghost" href="{{ url_for('profile') }}">Scegli un giocatore simulato</a></div>
   </div>
   {% endif %}
 

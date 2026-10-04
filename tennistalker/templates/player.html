@@ -6,7 +6,7 @@
   <div class="card dark">
     <div class="row between">
       <div>
-        <div class="muted small">{{ 'Giocatore' if p.gender == 'M' else 'Giocatrice' }} · {{ today.year - p.birth_year }} anni</div>
+        <div class="muted small">{% if p.real %}<span class="pill lime">Dati reali</span> {% endif %}{{ 'Giocatore' if p.gender == 'M' else 'Giocatrice' }} · {{ p.age_group or ((today.year - p.birth_year) ~ ' anni') }}</div>
         <h1 style="margin-top:4px">{{ p.name }}</h1>
         <div class="muted">{{ p.club }} · {{ p.city }}, {{ p.region }}</div>
       </div>

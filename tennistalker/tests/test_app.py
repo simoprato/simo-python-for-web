@@ -16,8 +16,8 @@ TODAY = date(2026, 10, 4)
 
 
 @pytest.fixture(scope="module")
-def app():
-    a = create_app(today=TODAY)
+def app(tmp_path_factory):
+    a = create_app(today=TODAY, profile_path=tmp_path_factory.mktemp("noprofile") / "none.json")
     a.config["TESTING"] = True
     return a
 
@@ -201,3 +201,132 @@ def test_profile_selection_redirects(client, world):
     assert r.headers["Location"] == "/"
     r = client.post("/profilo", data={"player_id": pid, "next": "//evil.example"})
     assert r.headers["Location"] == "/"
+
+
+# ---------------------------------------------------------------- dati reali
+SAMPLE_PROFILE = """[Home](https://example.it/)[Classifiche](https://example.it/classifiche)
+Nuovo postAggiungi amichevole
+Mario Bianchi
+O40
+[4.2](https://example.it/classifiche?rank=4.2)
+Regionale
+[Guarda i migliori giocatori della regione Toscana](https://example.it/classifiche?gender=male&region=TOS)
+[Guarda i migliori giocatori della provincia di FI](https://example.it/classifiche?gender=male&province=FI)
+Posizione relativa al club "CIRCOLO TENNIS DI ESEMPIO ASD"
+Vinte/Perse in base alla classifica dell'avversario
+Vittorie
+Sconfitte
+2 o più classifiche superiori
+1 Vinte4 Perse
+1 classifica superiore
+2 Vinte3 Perse
+Stessa classifica
+4 Vinte2 Perse
+1 classifica inferiore
+3 Vinte1 Perse
+2 o più classifiche inferiori
+2 Vinte0 Perse
+Vinte/Perse per numero di set
+Match conclusi in 2 set
+8 Vinte6 Perse
+Match conclusi in 3 set
+4 Vinte4 Perse
+Vinte/Perse per superficie
+Vittorie
+Sconfitte
+Terra rossa
+9 Vinte7 Perse
+Sconosciuta
+3 Vinte3 Perse
+Vinte/Perse per tipo di competizione
+Tornei
+10 Vinte8 Perse
+Gare a squadre
+2 Vinte2 Perse
+Vinte/Perse per tipo di campo
+Indoor
+2 Vinte2 Perse
+Stato di forma
+Ultimi 10 match
+VVSVSSVVVS
+Tornei giocati nel periodo considerato
+8
+Massima classifica raggiunta
+[4.2](https://example.it/classifiche?rank=4.2)
+nel 2025
+"""
+
+
+def test_parse_profile_text():
+    from engine.personal import parse_profile_text
+    p = parse_profile_text(SAMPLE_PROFILE)
+    assert (p["name"], p["age_group"], p["category"]) == ("Mario Bianchi", "O40", "4.2")
+    assert (p["region"], p["province"], p["club"]) == ("Toscana", "FI", "CIRCOLO TENNIS DI ESEMPIO ASD")
+    assert p["vs"] == {"2": [1, 4], "1": [2, 3], "0": [4, 2], "-1": [3, 1], "-2": [2, 0]}
+    assert p["sets"] == {"2": [8, 6], "3": [4, 4]}
+    assert p["surfaces"] == {"Terra rossa": [9, 7], "Sconosciuta": [3, 3]}
+    assert p["competition"] == {"Tornei": [10, 8], "Gare a squadre": [2, 2]}
+    assert (p["form"], p["tournaments"], p["max_category"]) == ("VVSVSSVVVS", 8, ["4.2", 2025])
+    assert (p["wins"], p["losses"]) == (12, 10)
+
+
+def test_parse_rejects_unrelated_text():
+    from engine.personal import ProfileParseError, parse_profile_text
+    with pytest.raises(ProfileParseError):
+        parse_profile_text("ciao, questo non è un profilo")
+
+
+def test_import_flow_reconstructs_exact_totals(tmp_path):
+    from engine.personal import PERSONAL_ID, REL_LABELS
+    a = create_app(today=TODAY, profile_path=tmp_path / "p.json")
+    c = a.test_client()
+    r = c.post("/i-miei-dati", data={"action": "import", "text": SAMPLE_PROFILE})
+    assert r.status_code == 302 and (tmp_path / "p.json").exists()
+    world = a.config["WORLD"]
+    me = world.players[PERSONAL_ID]
+    assert me.real and me.category_label == "4.2" and me.region == "Toscana"
+    ms = world.player_matches(PERSONAL_ID)
+    assert len(ms) == 22
+    wins = [m for m in ms if m.winner == PERSONAL_ID]
+    assert len(wins) == 12
+    # totali per classifica dell'avversario, numero di set e superficie
+    for _, diff in REL_LABELS:
+        got = [0, 0]
+        for m in ms:
+            won = m.winner == PERSONAL_ID
+            d = max(-2, min(2, (m.loser_cat if won else m.winner_cat) - me.category))
+            if d == diff:
+                got[0 if won else 1] += 1
+        assert got == world_profile(a)["vs"][str(diff)]
+    assert sum(1 for m in wins if len(m.sets) == 3) == 4
+    assert sum(1 for m in ms if m.surface == "Terra battuta") == 16
+    for m in ms:  # i set sono dal punto di vista del vincitore
+        assert sum(1 for a, b, _ in m.sets if a > b) == 2, m.sets
+    form = "".join("V" if m.winner == PERSONAL_ID else "S" for m in ms[-10:])
+    assert form == "VVSVSSVVVS"
+    # ogni torneo (non a squadre) termina con una sconfitta o è l'ultimo
+    for t in {m.tournament_id for m in ms}:
+        tm = [m for m in ms if m.tournament_id == t]
+        assert all(m.winner == PERSONAL_ID for m in tm[:-1])
+    # il profilo reale diventa quello predefinito e tutte le pagine funzionano
+    with c.session_transaction() as s:
+        s["premium"] = True
+    for url in ["/", "/i-miei-dati", "/classifica", "/classifica/armonizzata", "/classifica/supersimulata",
+                "/radar", "/analisi", "/posizione", "/simula", f"/giocatore/{PERSONAL_ID}", "/competizioni?when=past"]:
+        assert c.get(url).status_code == 200, url
+    assert "Mario Bianchi" in c.get("/").get_data(as_text=True)
+    # eliminazione
+    c.post("/i-miei-dati", data={"action": "delete"})
+    assert not (tmp_path / "p.json").exists()
+    assert PERSONAL_ID not in a.config["WORLD"].players
+
+
+def world_profile(a):
+    return a.config["PROFILE"]
+
+
+def test_import_error_shows_message(tmp_path):
+    a = create_app(today=TODAY, profile_path=tmp_path / "p.json")
+    r = a.test_client().post("/i-miei-dati", data={"action": "import", "text": "testo a caso"})
+    assert r.status_code == 200 and "Non trovo" in r.get_data(as_text=True)
+    assert not (tmp_path / "p.json").exists()

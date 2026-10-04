@@ -31,6 +31,8 @@ class Analytics:
             self.elo[w] += ELO_K * (1 - e)
             self.elo[l] -= ELO_K * (1 - e)
             # scostamento specifico per superficie (aggiornato con K ridotto)
+            if m.surface not in SURFACES:  # superficie sconosciuta: solo Elo generale
+                continue
             es = _expected(self.elo[w] + self.surface_elo[w][m.surface],
                            self.elo[l] + self.surface_elo[l][m.surface])
             self.surface_elo[w][m.surface] += 10 * (1 - es)
@@ -58,7 +60,7 @@ class Analytics:
             sets = m.player_view(pid)
             idx = 0 if won else 1
             s["wins" if won else "losses"] += 1
-            s["surface"][m.surface][idx] += 1
+            s["surface"].setdefault(m.surface, [0, 0])[idx] += 1
             rel = "higher" if opp_cat > p.category else "lower" if opp_cat < p.category else "equal"
             s["vs"][rel][idx] += 1
             for a, b, tb in sets:
@@ -128,12 +130,13 @@ class Analytics:
             elif r <= bad:
                 weaknesses.append(txt)
 
-        for surf in SURFACES:
-            judge(f"Su {surf.lower()}", s["surface"][surf], 0.65, 0.35)
+        for surf, pair in s["surface"].items():
+            if surf in SURFACES:
+                judge(f"Su {surf.lower()}", pair, 0.65, 0.35)
         judge("Tie-break", s["tiebreak"], 0.62, 0.38, 3)
         judge("Set decisivi", s["decider"], 0.62, 0.38, 3)
-        judge("Contro categorie superiori", s["vs"]["higher"], 0.45, 0.15, 3)
-        judge("Contro categorie inferiori", s["vs"]["lower"], 0.85, 0.6, 3)
+        judge("Contro categorie superiori", s["vs"]["higher"], 0.45, 0.25, 3)
+        judge("Contro categorie inferiori", s["vs"]["lower"], 0.8, 0.6, 3)
         judge("Dopo aver perso il primo set", s["first_set_lost"], 0.35, 0.1, 3)
         if s["bagels"][0] >= 3:
             strengths.append(f"Killer instinct: {s['bagels'][0]} set chiusi 6-0")
@@ -152,7 +155,7 @@ class Analytics:
     def rating(self, pid, surface=None):
         r = self.elo[pid]
         if surface:
-            r += self.surface_elo[pid][surface]
+            r += self.surface_elo[pid].get(surface, 0.0)
         return r
 
     def simulate(self, pid, opp_id, surface, match_tiebreak=True, n=2000):

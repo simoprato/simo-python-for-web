@@ -7,6 +7,7 @@ Tutti i dati sono sintetici e generati all'avvio; nessun pagamento reale viene e
 import hashlib
 import os
 from datetime import date
+from pathlib import Path
 from functools import wraps
 
 from flask import Flask, abort, flash, redirect, render_template, request, session, url_for
@@ -15,6 +16,8 @@ from engine import categories as cat
 from engine.analysis import Analytics
 from engine.charts import radar_chart, step_chart
 from engine.data import REGIONS, SURFACES, TOURNAMENT_KINDS, generate_world
+from engine.personal import (PERSONAL_ID, ProfileParseError, add_personal_player, delete_profile,
+                             load_profile, parse_profile_text, save_profile)
 from engine.ranking import RankingService
 from engine.simulation import format_score
 
@@ -38,27 +41,50 @@ FEATURES = [
 FEATURE_BY_ENDPOINT = {f[0]: f for f in FEATURES}
 
 
-def create_app(today=None, seed=2026):
+DEFAULT_PROFILE_PATH = Path(__file__).resolve().parent / "data" / "il_mio_profilo.json"
+
+
+def create_app(today=None, seed=2026, profile_path=None):
     app = Flask(__name__)
     app.secret_key = os.environ.get("TENNISSIM_SECRET", "tennissim-dev-key")
-    world = generate_world(today or date.today(), seed=seed)
-    ranking = RankingService(world)
-    analytics = Analytics(world, ranking)
-    app.config.update(WORLD=world, RANKING=ranking, ANALYTICS=analytics)
+    app.config["MAX_CONTENT_LENGTH"] = 512 * 1024
+    profile_path = Path(profile_path or os.environ.get("TENNISSIM_PROFILE") or DEFAULT_PROFILE_PATH)
+    world = ranking = analytics = None
+    personal_error = None
+
+    def build():
+        """(Ri)genera il mondo simulato e, se presente, vi inserisce il profilo reale salvato."""
+        nonlocal world, ranking, analytics, personal_error
+        world = generate_world(today or date.today(), seed=seed)
+        personal_error = None
+        profile = load_profile(profile_path)
+        if profile:
+            try:
+                add_personal_player(world, profile)
+            except (KeyError, ValueError, RuntimeError) as e:
+                personal_error = f"Profilo salvato non valido: {e}"
+        ranking = RankingService(world)
+        analytics = Analytics(world, ranking)
+        app.config.update(WORLD=world, RANKING=ranking, ANALYTICS=analytics, PROFILE=profile)
+
+    build()
 
     # ------------------------------------------------------------------ helpers
     def is_premium():
         return bool(session.get("premium"))
 
     def me():
+        """Profilo scelto nella sessione; in assenza, il profilo con i dati reali (se importato)."""
         pid = session.get("player_id")
-        return world.players.get(pid) if pid else None
+        if pid in world.players:
+            return world.players[pid]
+        return world.players.get(PERSONAL_ID)
 
     def target_player():
         """Giocatore su cui lavorare: ?id=... oppure il profilo selezionato."""
-        pid = request.args.get("id", type=int) or session.get("player_id")
+        pid = request.args.get("id", type=int)
         if not pid:
-            return None
+            return me()
         p = world.players.get(pid)
         if p is None:
             abort(404)
@@ -85,7 +111,8 @@ def create_app(today=None, seed=2026):
     @app.context_processor
     def inject():
         return {"premium": is_premium(), "me": me(), "features": FEATURES, "price": PRICE,
-                "today": world.today, "cat": cat, "rank": ranking.realtime}
+                "today": world.today, "cat": cat, "rank": ranking.realtime,
+                "personal_error": personal_error}
 
     @app.template_filter("d")
     def fmt_date(d):
@@ -217,6 +244,38 @@ def create_app(today=None, seed=2026):
         entrants = sorted((world.players[x] for x in t.entrants), key=lambda x: -x.category)
         return render_template("competition.html", t=t, rounds=rounds, entrants=entrants,
                                players=world.players, radar=radar)
+
+    # ------------------------------------------------------------------ dati reali
+    @app.route("/i-miei-dati", methods=["GET", "POST"])
+    def my_data():
+        if request.method == "POST":
+            if request.form.get("action") == "delete":
+                delete_profile(profile_path)
+                if session.get("player_id") == PERSONAL_ID:
+                    session.pop("player_id")
+                build()
+                flash("Dati reali eliminati da questo computer.", "info")
+                return redirect(url_for("my_data"))
+            text = request.form.get("text", "")
+            try:
+                profile = parse_profile_text(text)
+            except ProfileParseError as e:
+                flash(str(e), "error")
+                return render_template("my_data.html", text=text, profile=None, check=None)
+            save_profile(profile_path, profile)
+            build()
+            if personal_error:
+                flash(personal_error, "error")
+            else:
+                session["player_id"] = PERSONAL_ID
+                flash(f"Dati importati: {profile['wins']} vittorie e {profile['losses']} sconfitte ricostruite.", "ok")
+            return redirect(url_for("my_data"))
+        profile = app.config.get("PROFILE")
+        check = None
+        if profile and PERSONAL_ID in world.players:
+            check = _reconstruction_check(world, profile)
+        return render_template("my_data.html", text="", profile=profile, check=check,
+                               p=world.players.get(PERSONAL_ID))
 
     # ------------------------------------------------------------------ PREMIUM
     @app.route("/classifica/armonizzata")
@@ -354,6 +413,30 @@ def create_app(today=None, seed=2026):
                                text="Il giocatore o il torneo richiesto non esiste."), 404
 
     return app
+
+
+def _reconstruction_check(world, profile):
+    """Confronta i totali incollati con quelli delle partite ricostruite."""
+    from engine.personal import REL_LABELS
+    me = world.players[PERSONAL_ID]
+    rows = []
+    ms = world.player_matches(PERSONAL_ID)
+    for label, diff in REL_LABELS:
+        got = [0, 0]
+        for m in ms:
+            won = m.winner == PERSONAL_ID
+            opp_cat = m.loser_cat if won else m.winner_cat
+            d = max(-2, min(2, opp_cat - me.category))
+            if d == diff:
+                got[0 if won else 1] += 1
+        rows.append((label, profile["vs"].get(str(diff), [0, 0]), got))
+    for n in (2, 3):
+        got = [0, 0]
+        for m in ms:
+            if len(m.sets) == n:
+                got[0 if m.winner == PERSONAL_ID else 1] += 1
+        rows.append((f"Match in {n} set", (profile.get("sets") or {}).get(str(n)) or [0, 0], got))
+    return rows
 
 
 if __name__ == "__main__":

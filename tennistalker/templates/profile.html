@@ -3,7 +3,9 @@
 {% block content %}
 <div class="stack" style="max-width:760px">
   <h1>Il tuo profilo giocatore</h1>
-  <p class="muted">Cerca il giocatore da usare come "te stesso": classifica, radar, simulazioni e analisi verranno calcolati su di lui.</p>
+  <div class="card dark row between"><div>Hai già un profilo su un'app di ranking? Importa le tue statistiche reali.</div>
+    <a class="btn lime small" href="{{ url_for('my_data') }}">I miei dati</a></div>
+  <p class="muted">Oppure cerca il giocatore da usare come "te stesso": classifica, radar, simulazioni e analisi verranno calcolati su di lui.</p>
   {% if me %}<div class="card row between"><div>Profilo attuale: <b>{{ me.name }}</b> · {{ me.club }} <span class="cat">{{ me.category_label }}</span></div>
     <a class="btn ghost small" href="{{ url_for('profile_clear') }}">Rimuovi</a></div>{% endif %}
   <form class="filters" method="get">

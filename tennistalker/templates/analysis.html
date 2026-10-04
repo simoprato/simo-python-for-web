@@ -5,6 +5,7 @@
 <h1>Forze & Debolezze</h1>
 <p class="muted">{{ p.name }} · {{ s.played }} partite negli ultimi 13 mesi · {{ s.wins }}V–{{ s.losses }}S · forma {{ form_dots(s.form) }}</p>
 <div class="stack">
+{% if p.real %}<div class="flash">ℹ︎ Profilo con dati reali: superfici, set e risultati contro ogni fascia di classifica sono reali; tie-break, rimonte, game e singoli punteggi derivano dalle partite ricostruite.</div>{% endif %}
 <div class="grid g2">
   <div class="card">
     <svg viewBox="0 0 {{ chart.width }} {{ chart.height }}" width="100%" style="max-width:540px; display:block; margin:auto" role="img" aria-label="Profilo di gioco">

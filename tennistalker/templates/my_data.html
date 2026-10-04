@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}I miei dati · TennisSim{% endblock %}
+{% block content %}
+<div class="stack" style="max-width:960px">
+  <h1>I miei dati reali</h1>
+  {% if personal_error %}<div class="flash error">{{ personal_error }}</div>{% endif %}
+
+  {% if profile and p %}
+  <div class="card dark">
+    <div class="row between">
+      <div>
+        <span class="pill lime">Dati reali</span> <span class="pill">{{ profile.age_group }}</span>
+        <h2 style="margin-top:10px">{{ p.name }}</h2>
+        <div class="muted">{{ p.club }} · {{ p.region }}{% if profile.province %} ({{ profile.province }}){% endif %}</div>
+      </div>
+      <span class="cat big lime">{{ p.category_label }}</span>
+    </div>
+    <div class="grid g4" style="margin-top:16px">
+      <div><div class="muted small">Vittorie / sconfitte</div><div class="kpi">{{ profile.wins }}–{{ profile.losses }}</div></div>
+      <div><div class="muted small">Tornei giocati</div><div class="kpi">{{ profile.tournaments or '—' }}</div></div>
+      <div><div class="muted small">Stato di forma</div><div class="kpi" style="font-size:22px; letter-spacing:.08em">{{ profile.form or '—' }}</div></div>
+      <div><div class="muted small">Classifica massima</div><div class="kpi">{{ profile.max_category[0] if profile.max_category else p.category_label }}</div>
+        {% if profile.max_category %}<div class="muted small">nel {{ profile.max_category[1] }}</div>{% endif %}</div>
+    </div>
+    <div class="row" style="margin-top:16px">
+      <a class="btn lime small" href="{{ url_for('realtime', id=p.id) }}">Classifica simulata</a>
+      <a class="btn ghost small" href="{{ url_for('harmonized', id=p.id) }}">Armonizzata {% if not premium %}🔒{% endif %}</a>
+      <a class="btn ghost small" href="{{ url_for('supersimulated', id=p.id) }}">Supersimulata {% if not premium %}🔒{% endif %}</a>
+      <a class="btn ghost small" href="{{ url_for('analysis', id=p.id) }}">Forze & Debolezze {% if not premium %}🔒{% endif %}</a>
+      <a class="btn ghost small" href="{{ url_for('radar', id=p.id) }}">Radar Tornei {% if not premium %}🔒{% endif %}</a>
+      <a class="btn ghost small" href="{{ url_for('positions', id=p.id) }}">Posizione {% if not premium %}🔒{% endif %}</a>
+      <a class="btn ghost small" href="{{ url_for('player', pid=p.id) }}">Partite ricostruite</a>
+    </div>
+  </div>
+
+  <div class="grid g2">
+    <div class="card">
+      <h3>Controllo della ricostruzione</h3>
+      <p class="muted small">Il testo incollato contiene solo totali. L'app ha ricostruito {{ profile.wins + profile.losses }} partite che rispettano questi totali.</p>
+      <table>
+        <thead><tr><th></th><th class="num">Dai tuoi dati</th><th class="num">Ricostruite</th></tr></thead>
+        {% for label, src, got in check %}
+          <tr><td>{{ label }}</td><td class="num">{{ src[0] }}V – {{ src[1] }}S</td>
+            <td class="num">{{ got[0] }}V – {{ got[1] }}S {{ '✓' if src[0] == got[0] and src[1] == got[1] else '≈' }}</td></tr>
+        {% endfor %}
+      </table>
+    </div>
+    <div class="card small">
+      <h3>Cosa è reale e cosa è ricostruito</h3>
+      <ul class="checks">
+        <li><b>Reali:</b> nome, fascia d'età, classifica, circolo, regione, vittorie/sconfitte per classifica dell'avversario, per numero di set, per superficie e per tipo di competizione, stato di forma.</li>
+        <li><b>Ricostruiti:</b> date, avversari (presi dal mondo simulato con la categoria giusta), punteggi e suddivisione nei tornei. "2 o più classifiche" è trattato come esattamente 2.</li>
+        <li><b>Stato di forma</b> letto da sinistra (partita più vecchia) a destra (più recente).</li>
+        <li>Le classifiche sono calcolate con il <b>regolamento semplificato</b> di questa app, non con quello ufficiale FITP.</li>
+        <li>I dati restano in <code>data/il_mio_profilo.json</code> sul tuo computer e sono esclusi da git.</li>
+      </ul>
+    </div>
+  </div>
+  {% else %}
+  <p class="muted">Apri la pagina del tuo profilo su un'app di ranking (ad esempio Tennistalker), seleziona tutto il testo della pagina (Ctrl+A / Cmd+A), copialo e incollalo qui sotto.
+    L'app legge nome, classifica, circolo e statistiche e ricostruisce le tue partite.</p>
+  {% endif %}
+
+  <div class="card">
+    <h3>{{ 'Aggiorna i dati' if profile else 'Incolla il testo del tuo profilo' }}</h3>
+    <form method="post">
+      <input type="hidden" name="action" value="import">
+      <textarea name="text" rows="10" style="width:100%; font: 13px ui-monospace, monospace; padding:12px; border-radius:12px; border:1px solid var(--line)" placeholder="Simone Rossi&#10;O30&#10;4.1&#10;...&#10;Vinte/Perse in base alla classifica dell'avversario&#10;...">{{ text }}</textarea>
+      <div class="row" style="margin-top:10px"><button class="btn lime">Importa i miei dati</button>
+        <span class="muted small">Il testo viene analizzato sul tuo computer e non viene salvato: si salvano solo i valori estratti.</span></div>
+    </form>
+    {% if profile %}
+    <form method="post" style="margin-top:12px" onsubmit="return confirm('Eliminare i dati reali da questo computer?')">
+      <input type="hidden" name="action" value="delete"><button class="btn ghost small">Elimina i miei dati</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
